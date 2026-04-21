@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中山國小學期評量看板系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            overflow: hidden;
+            background-color: #f3f4f6;
+        }
+        .text-shadow {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .hidden-input {
+            display: none;
+        }
+        .btn-active:active {
+            transform: scale(0.95);
+        }
+        .track-transition {
+            transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+        }
+        select, button, input {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const SCHEDULE = [
+            { type: 'break', start: '08:40', end: '08:45', label: '準備' },
+            { type: 'exam',  start: '08:45', end: '09:25', label: '第一節' },
+            { type: 'break', start: '09:25', end: '09:35', label: '下課' },
+            { type: 'exam',  start: '09:35', end: '10:15', label: '第二節' },
+            { type: 'break', start: '10:15', end: '10:25', label: '下課' },
+            { type: 'exam',  start: '10:25', end: '11:05', label: '第三節' },
+            { type: 'break', start: '11:05', end: '11:15', label: '收卷' }
+        ];
+
+        const EXAM_SLOTS = SCHEDULE.filter(s => s.type === 'exam');
+
+        const EXAM_MESSAGES = [
+            "考卷記得寫上班級姓名座號",
+            "有問題舉手問老師，需要撿東西請監考老師幫忙",
+            "不會寫的題目跳過，寫會的題目",
+            "耐心、細心、小心",
+            "考卷有問題，等出題老師來說明",
+            "不要轉頭玩東西，寫完多檢查",
+            "檢查完再檢查或趴下休息",
+            "考試即將結束，檢查有沒有寫答案抄錯"
+        ];
+
+        const BREAK_MESSAGES = [
+            "等監考老師喊下課，再離開座位",
+            "利用下課準備下個科目與文具用品",
+            "提早上廁所和喝水",
+            "桌面淨空，準備迎接考試",
+            "準備考試、收拾位置、坐在位置上"
+        ];
+
+        // 後續若同一提醒要輪播多張圖，只要在陣列內增加檔名即可。
+        const MESSAGE_IMAGE_MAP = {
+            "考卷記得寫上班級姓名座號": ["./message01.jpeg"],
+            "有問題舉手問老師，需要撿東西請監考老師幫忙": ["./message02.jpeg"],
+            "不會寫的題目跳過，寫會的題目": ["./message03.jpeg"],
+            "耐心、細心、小心": ["./message04.jpeg"],
+            "考卷有問題，等出題老師來說明": ["./message05.jpeg"],
+            "不要轉頭玩東西，寫完多檢查": ["./message06.jpeg"],
+            "檢查完再檢查或趴下休息": ["./message07.jpeg"],
+            "考試即將結束，檢查有沒有寫答案抄錯": ["./message08.jpeg"],
+            "等監考老師喊下課，再離開座位": ["./message09.jpeg"],
+            "利用下課準備下個科目與文具用品": ["./message10.jpeg"],
+            "提早上廁所和喝水": ["./message11.jpeg"],
+            "桌面淨空，準備迎接考試": ["./message12.jpeg"],
+            "準備考試、收拾位置、坐在位置上": ["./message13.jpeg"]
+        };
+
+        const ALL_REMINDER_MESSAGES = [...EXAM_MESSAGES, ...BREAK_MESSAGES];
+
+        const formatTime = (date) => {
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            const period = hours < 12 ? '上午' : '下午';
+            hours = hours % 12;
+            if (hours === 0) hours = 12;
+            return `${period} ${hours}:${minutes}:${seconds}`;
+        };
+
+        const getDefaultReminderSettings = () => ({
+            displayMode: 'image',
+            selectionMode: 'auto',
+            manualMessage: EXAM_MESSAGES[0]
+        });
+
+        const getDefaultViewMode = () => 'student';
+
+        const App = () => {
+            const [now, setNow] = useState(new Date());
+            const [offset, setOffset] = useState(() => {
+                const saved = localStorage.getItem('exam_clock_offset');
+                return saved ? parseInt(saved, 10) : 0;
+            });
+
+            const [audioTracks, setAudioTracks] = useState([
+                { src: null, fileName: "", isPlaying: false, progress: 0 },
+                { src: null, fileName: "", isPlaying: false, progress: 0 },
+                { src: null, fileName: "", isPlaying: false, progress: 0 }
+            ]);
+
+            const audioRefs = useRef([]);
+            const fileInputRefs = useRef([]);
+
+            const [examData, setExamData] = useState(() => {
+                const saved = localStorage.getItem('exam_data');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (typeof parsed.subject === 'string') {
+                        return { ...parsed, subjects: [parsed.subject, "", ""], subject: undefined };
+                    }
+                    if (!parsed.subjects) {
+                        return { ...parsed, subjects: ["", "", ""] };
+                    }
+                    const _shouldNum = parseInt(parsed.shouldArrive, 10);
+                    if (!Number.isFinite(_shouldNum) || _shouldNum <= 0) parsed.shouldArrive = "26";
+
+                    const _actualNum = parseInt(parsed.actualArrive, 10);
+                    if (!Number.isFinite(_actualNum) || _actualNum < 0) parsed.actualArrive = String(parsed.shouldArrive ?? "26");
+
+                    if (String(parsed.actualArrive) === "0") parsed.actualArrive = String(parsed.shouldArrive ?? "26");
+
+                    return parsed;
+                }
+                return {
+                    subjects: ["國語", "自然", "英文"],
+                    shouldArrive: "26",
+                    actualArrive: "26",
+                    absentList: ""
+                };
+            });
+
+            const [reminderSettings, setReminderSettings] = useState(() => {
+                const saved = localStorage.getItem('reminder_settings');
+                if (!saved) return getDefaultReminderSettings();
+                try {
+                    return { ...getDefaultReminderSettings(), ...JSON.parse(saved) };
+                } catch {
+                    return getDefaultReminderSettings();
+                }
+            });
+
+            const [imageCycleTick, setImageCycleTick] = useState(0);
+            const [viewMode, setViewMode] = useState(() => {
+                const saved = localStorage.getItem('board_view_mode');
+                return saved || getDefaultViewMode();
+            });
+
+            const isTeacherMode = viewMode === 'teacher';
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setNow(new Date());
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            useEffect(() => {
+                const imageTimer = setInterval(() => {
+                    setImageCycleTick(prev => prev + 1);
+                }, 8000);
+                return () => clearInterval(imageTimer);
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('exam_clock_offset', offset);
+            }, [offset]);
+
+            useEffect(() => {
+                localStorage.setItem('exam_data', JSON.stringify(examData));
+            }, [examData]);
+
+            useEffect(() => {
+                localStorage.setItem('reminder_settings', JSON.stringify(reminderSettings));
+            }, [reminderSettings]);
+
+            useEffect(() => {
+                localStorage.setItem('board_view_mode', viewMode);
+            }, [viewMode]);
+
+            const adjustedNow = useMemo(() => {
+                return new Date(now.getTime() + offset);
+            }, [now, offset]);
+
+            const currentSlot = useMemo(() => {
+                const currentMs = adjustedNow.getHours() * 3600000 + adjustedNow.getMinutes() * 60000 + adjustedNow.getSeconds() * 1000;
+                for (let slot of SCHEDULE) {
+                    const [sh, sm] = slot.start.split(':').map(Number);
+                    const startMs = sh * 3600000 + sm * 60000;
+                    const [eh, em] = slot.end.split(':').map(Number);
+                    const endMs = eh * 3600000 + em * 60000;
+                    if (currentMs >= startMs && currentMs < endMs) {
+                        return { ...slot, startMs, endMs, durationMs: endMs - startMs };
+                    }
+                }
+                return null;
+            }, [adjustedNow]);
+
+            const autoReminderMessage = useMemo(() => {
+                if (!currentSlot) return "目前沒有提醒事項";
+
+                const currentMs = adjustedNow.getHours() * 3600000 + adjustedNow.getMinutes() * 60000 + adjustedNow.getSeconds() * 1000;
+                const elapsedMinutes = Math.floor((currentMs - currentSlot.startMs) / 60000);
+
+                let messages = [];
+                let interval = 5;
+
+                if (currentSlot.type === 'exam') {
+                    messages = EXAM_MESSAGES;
+                    interval = 5;
+                } else {
+                    messages = BREAK_MESSAGES;
+                    const durationMins = currentSlot.durationMs / 60000;
+                    interval = durationMins >= 20 ? 4 : 2;
+                }
+
+                const index = Math.floor(elapsedMinutes / interval) % messages.length;
+                return messages[index];
+            }, [adjustedNow, currentSlot]);
+
+            const activeReminderMessage = useMemo(() => {
+                if (reminderSettings.selectionMode === 'manual') {
+                    return reminderSettings.manualMessage || ALL_REMINDER_MESSAGES[0];
+                }
+                return autoReminderMessage;
+            }, [reminderSettings, autoReminderMessage]);
+
+            const activeReminderImages = useMemo(() => {
+                return MESSAGE_IMAGE_MAP[activeReminderMessage] || [];
+            }, [activeReminderMessage]);
+
+            const reminderImageSrc = useMemo(() => {
+                if (!activeReminderImages.length) return null;
+                const index = imageCycleTick % activeReminderImages.length;
+                return activeReminderImages[index];
+            }, [activeReminderImages, imageCycleTick]);
+
+            const progressInfo = useMemo(() => {
+                if (!currentSlot) {
+                    return { remainingPercent: 0, color: 'stroke-gray-300', text: '等待中' };
+                }
+
+                const currentMs = adjustedNow.getHours() * 3600000 + adjustedNow.getMinutes() * 60000 + adjustedNow.getSeconds() * 1000;
+                const progressMs = currentMs - currentSlot.startMs;
+                const totalMs = currentSlot.durationMs;
+                const remainingMs = totalMs - progressMs;
+                const elapsedPercent = Math.min(100, Math.max(0, (progressMs / totalMs) * 100));
+                const remainingPercent = 100 - elapsedPercent;
+
+                let colorClass = 'stroke-green-500';
+                let statusText = "";
+
+                if (currentSlot.type === 'exam') {
+                    statusText = "考試開始";
+                    if (remainingMs <= totalMs / 2) {
+                        colorClass = 'stroke-yellow-400';
+                        statusText = "考試時間剩下一半";
+                    }
+                    if (remainingMs <= 10 * 60000) {
+                        colorClass = 'stroke-red-500';
+                        statusText = "考試時間不到10分鐘";
+                    }
+                } else {
+                    if (remainingMs > 5 * 60000) {
+                        colorClass = 'stroke-green-500';
+                        statusText = "休息時間";
+                    } else if (remainingMs > 3 * 60000) {
+                        colorClass = 'stroke-yellow-400';
+                        statusText = "快去上廁所喝水";
+                    } else {
+                        colorClass = 'stroke-red-500';
+                        statusText = "請收拾東西在座位上坐好";
+                    }
+                }
+
+                return { remainingPercent, color: colorClass, text: statusText };
+            }, [adjustedNow, currentSlot]);
+
+            const handleInputChange = (field, value) => {
+                const sanitized = value === "" ? "" : String(Math.max(0, parseInt(value, 10) || 0));
+
+                setExamData(prev => {
+                    if (field === "shouldArrive") {
+                        const nextShould = sanitized === "" ? "" : sanitized;
+                        const wasLinked = String(prev.actualArrive) === String(prev.shouldArrive) || prev.actualArrive === "";
+                        const next = { ...prev, shouldArrive: nextShould };
+                        const nextShouldNum = parseInt(nextShould, 10) || 0;
+                        const prevActualNum = parseInt(prev.actualArrive, 10) || 0;
+                        if (wasLinked || prevActualNum > nextShouldNum) {
+                            next.actualArrive = nextShould;
+                        }
+                        return next;
+                    }
+
+                    if (field === "actualArrive") {
+                        const shouldNum = parseInt(prev.shouldArrive, 10) || 0;
+                        const actualNum = parseInt(sanitized, 10) || 0;
+                        const capped = sanitized === "" ? "" : String(Math.min(actualNum, shouldNum));
+                        return { ...prev, actualArrive: capped };
+                    }
+
+                    return { ...prev, [field]: sanitized };
+                });
+            };
+
+            const adjustCount = (field, delta) => {
+                setExamData(prev => {
+                    const cur = Math.max(0, parseInt(prev[field], 10) || 0);
+                    const nextVal = Math.max(0, cur + delta);
+
+                    if (field === "shouldArrive") {
+                        const wasLinked = String(prev.actualArrive) === String(prev.shouldArrive) || prev.actualArrive === "";
+                        const prevActualNum = Math.max(0, parseInt(prev.actualArrive, 10) || 0);
+                        const next = { ...prev, shouldArrive: String(nextVal) };
+                        if (wasLinked || prevActualNum > nextVal) {
+                            next.actualArrive = String(nextVal);
+                        }
+                        return next;
+                    }
+
+                    if (field === "actualArrive") {
+                        const shouldNum = Math.max(0, parseInt(prev.shouldArrive, 10) || 0);
+                        return { ...prev, actualArrive: String(Math.min(nextVal, shouldNum)) };
+                    }
+
+                    return { ...prev, [field]: String(nextVal) };
+                });
+            };
+
+            const handleSubjectChange = (index, value) => {
+                const newSubjects = [...examData.subjects];
+                newSubjects[index] = value;
+                setExamData(prev => ({ ...prev, subjects: newSubjects }));
+            };
+
+            const adjustTime = (seconds) => {
+                setOffset(prev => prev + (seconds * 1000));
+            };
+
+            const handleFileSelect = (index, e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const url = URL.createObjectURL(file);
+                    setAudioTracks(prev => {
+                        const newTracks = [...prev];
+                        if (newTracks[index].src) URL.revokeObjectURL(newTracks[index].src);
+                        newTracks[index] = { src: url, fileName: file.name, isPlaying: false, progress: 0 };
+                        return newTracks;
+                    });
+                }
+            };
+
+            const togglePlay = (index) => {
+                const audioEl = audioRefs.current[index];
+                if (!audioEl) return;
+
+                setAudioTracks(prev => {
+                    const newTracks = [...prev];
+                    const isNowPlaying = !newTracks[index].isPlaying;
+
+                    if (isNowPlaying) {
+                        newTracks.forEach((track, i) => {
+                            if (i !== index && track.isPlaying) {
+                                if (audioRefs.current[i]) audioRefs.current[i].pause();
+                                track.isPlaying = false;
+                            }
+                        });
+                        audioEl.play().catch(() => {});
+                    } else {
+                        audioEl.pause();
+                    }
+
+                    newTracks[index].isPlaying = isNowPlaying;
+                    return newTracks;
+                });
+            };
+
+            const replayAudio = (index) => {
+                const audioEl = audioRefs.current[index];
+                if (!audioEl) return;
+                audioEl.currentTime = 0;
+                audioEl.play().catch(() => {});
+
+                setAudioTracks(prev => {
+                    const newTracks = [...prev];
+                    newTracks.forEach((track, i) => {
+                        if (i !== index && track.isPlaying) {
+                            if (audioRefs.current[i]) audioRefs.current[i].pause();
+                            track.isPlaying = false;
+                        }
+                    });
+                    newTracks[index].isPlaying = true;
+                    return newTracks;
+                });
+            };
+
+            const handleAudioEnded = (index) => {
+                setAudioTracks(prev => {
+                    const newTracks = [...prev];
+                    newTracks[index].isPlaying = false;
+                    newTracks[index].progress = 0;
+                    return newTracks;
+                });
+            };
+
+            const handleTimeUpdate = (index, e) => {
+                const current = e.target.currentTime;
+                const duration = e.target.duration;
+                const percent = (duration > 0) ? (current / duration) * 100 : 0;
+                setAudioTracks(prev => {
+                    const newTracks = [...prev];
+                    newTracks[index] = { ...newTracks[index], progress: percent };
+                    return newTracks;
+                });
+            };
+
+            const setReminderDisplayMode = (displayMode) => {
+                setReminderSettings(prev => ({ ...prev, displayMode }));
+            };
+
+            const setReminderSelectionMode = (selectionMode) => {
+                setReminderSettings(prev => ({ ...prev, selectionMode }));
+            };
+
+            const setManualReminderMessage = (manualMessage) => {
+                setReminderSettings(prev => ({ ...prev, manualMessage }));
+            };
+
+            const manualOptions = reminderSettings.displayMode === 'image'
+                ? ALL_REMINDER_MESSAGES.filter(message => (MESSAGE_IMAGE_MAP[message] || []).length > 0)
+                : ALL_REMINDER_MESSAGES;
+
+            return (
+                <div className="flex flex-col h-screen w-screen overflow-hidden text-gray-800">
+                    <div className="absolute top-2 right-3 z-50 flex rounded-xl overflow-hidden border border-gray-300 bg-white/95 shadow-md scale-90 origin-top-right">
+                        <button
+                            onClick={() => setViewMode('student')}
+                            className={`px-3 py-1.5 text-xs font-bold transition-colors ${viewMode === 'student' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                        >
+                            學生模式
+                        </button>
+                        <button
+                            onClick={() => setViewMode('teacher')}
+                            className={`px-3 py-1.5 text-xs font-bold transition-colors ${viewMode === 'teacher' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                        >
+                            教師模式
+                        </button>
+                    </div>
+                    <div className="h-[33vh] w-full bg-white border-b-4 border-gray-300 flex flex-row relative shadow-lg z-10">
+                        <div className={`w-1/3 flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-2 ${isTeacherMode ? 'group' : ''}`}>
+                            <div className="text-[1.5vw] text-gray-500 font-bold mb-1 tracking-widest">現在時間</div>
+                            <div className="text-[6vw] font-black leading-none text-gray-800 tabular-nums tracking-tighter mb-2">
+                                {formatTime(adjustedNow)}
+                            </div>
+                            {isTeacherMode && (
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-1 opacity-20 group-hover:opacity-100 transition-opacity w-full max-w-[260px]">
+                                    <div className="flex justify-between items-center gap-1">
+                                        <button onClick={() => adjustTime(-3600)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">-1時</button>
+                                        <button onClick={() => adjustTime(3600)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">+1時</button>
+                                    </div>
+                                    <div className="flex justify-between items-center gap-1">
+                                        <button onClick={() => adjustTime(-60)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">-1分</button>
+                                        <button onClick={() => adjustTime(60)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">+1分</button>
+                                    </div>
+                                    <div className="flex justify-between items-center gap-1">
+                                        <button onClick={() => adjustTime(-1)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">-1秒</button>
+                                        <button onClick={() => adjustTime(1)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">+1秒</button>
+                                    </div>
+                                    <div className="flex justify-between items-center gap-1">
+                                        <button onClick={() => adjustTime(-30)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">-30秒</button>
+                                        <button onClick={() => adjustTime(30)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">+30秒</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="w-2/3 flex flex-col relative bg-gray-100 items-center justify-center p-4">
+                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                <span className="text-[4vw] font-bold text-gray-500 opacity-60 select-none whitespace-nowrap drop-shadow-sm">
+                                    {progressInfo.text}
+                                </span>
+                            </div>
+                            <svg className="w-full h-full" viewBox="0 0 300 50" preserveAspectRatio="xMidYMid meet">
+                                <rect x="5" y="5" width="290" height="40" rx="20" ry="20" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                                <rect
+                                    x="5" y="5" width="290" height="40" rx="20" ry="20"
+                                    fill="none"
+                                    className={`track-transition ${progressInfo.color}`}
+                                    strokeWidth="8"
+                                    pathLength="100"
+                                    strokeDasharray="100"
+                                    strokeDashoffset={100 - progressInfo.remainingPercent}
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-row h-[67vh]">
+                        <div className="w-1/2 flex flex-col border-r-4 border-gray-300 bg-white overflow-hidden">
+                            <div className="h-2/3 flex flex-col border-b-2 border-dashed border-gray-300">
+                                {EXAM_SLOTS.map((slot, index) => {
+                                    const isActive = currentSlot && currentSlot.start === slot.start;
+                                    const isNone = (examData.subjects[index] === "正常上課");
+                                    return (
+                                        <div key={index} className={`flex-1 flex items-center gap-2 border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
+                                            <div className="flex-1">
+                                                <select
+                                                    value={examData.subjects[index] || ""}
+                                                    onChange={(e) => handleSubjectChange(index, e.target.value)}
+                                                    className="w-full text-[2.8vw] font-black bg-transparent border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none placeholder-gray-300 leading-tight text-black"
+                                                >
+                                                    {["國語","數學","社會","自然","英文","正常上課"].map((subj) => (
+                                                        <option key={subj} value={subj}>{subj}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="text-[3vw] font-black whitespace-nowrap text-black font-sans tracking-tight">
+                                                {slot.start}~{slot.end}
+                                            </div>
+
+                                            <div className="flex flex-col items-end justify-center gap-1 w-[22%] relative">
+                                                <input
+                                                    type="file"
+                                                    accept="audio/*"
+                                                    ref={el => fileInputRefs.current[index] = el}
+                                                    onChange={(e) => handleFileSelect(index, e)}
+                                                    className="hidden-input"
+                                                />
+
+                                                <div className="flex gap-1 w-full justify-end items-center">
+                                                    <button
+                                                        onClick={() => fileInputRefs.current[index]?.click()}
+                                                        className="btn-active p-1 bg-gray-100 text-gray-500 rounded hover:bg-gray-200 transition-colors h-8 w-8 flex items-center justify-center"
+                                                        title="上傳聽力"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                    </button>
+
+                                                    {audioTracks[index].src && (
+                                                        <button
+                                                            onClick={() => togglePlay(index)}
+                                                            className={`btn-active px-2 rounded text-white text-xs font-bold shadow flex items-center justify-center transition-colors h-8 min-w-[3.5rem] ${audioTracks[index].isPlaying ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                                                        >
+                                                            {audioTracks[index].isPlaying ? '暫停' : '播放'}
+                                                        </button>
+                                                    )}
+
+                                                    {audioTracks[index].src && (
+                                                        <button
+                                                            onClick={() => replayAudio(index)}
+                                                            className="btn-active p-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors h-8 w-8 flex items-center justify-center"
+                                                            title="重播"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                {audioTracks[index].src && (
+                                                    <div className="w-full h-1 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                                        <div className="h-full bg-blue-500 transition-all duration-200 ease-linear" style={{ width: `${audioTracks[index].progress}%` }}></div>
+                                                    </div>
+                                                )}
+
+                                                <audio
+                                                    ref={el => audioRefs.current[index] = el}
+                                                    src={audioTracks[index].src || undefined}
+                                                    onEnded={() => handleAudioEnded(index)}
+                                                    onTimeUpdate={(e) => handleTimeUpdate(index, e)}
+                                                    hidden
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="h-1/3 flex flex-row bg-blue-50">
+                                <div className="flex-1 flex flex-col items-center justify-center border-r border-blue-200 p-2">
+                                    <span className="text-[1.5vw] font-bold text-blue-800">應到</span>
+                                    <div className="flex items-center justify-center gap-3 w-full">
+                                        <button onClick={() => adjustCount('shouldArrive', -1)} className="btn-active w-12 h-12 rounded-full bg-blue-200 text-blue-900 font-black text-2xl hover:bg-blue-300" aria-label="應到減一">−</button>
+                                        <input type="number" value={examData.shouldArrive} onChange={(e) => handleInputChange('shouldArrive', e.target.value)} className="w-full text-center bg-transparent text-[4vw] font-bold text-blue-900 outline-none" placeholder="0" />
+                                        <button onClick={() => adjustCount('shouldArrive', 1)} className="btn-active w-12 h-12 rounded-full bg-blue-200 text-blue-900 font-black text-2xl hover:bg-blue-300" aria-label="應到加一">+</button>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 flex flex-col items-center justify-center border-r border-blue-200 p-2">
+                                    <span className="text-[1.5vw] font-bold text-green-800">實到</span>
+                                    <div className="flex items-center justify-center gap-3 w-full">
+                                        <button onClick={() => adjustCount('actualArrive', -1)} className="btn-active w-12 h-12 rounded-full bg-green-200 text-green-900 font-black text-2xl hover:bg-green-300" aria-label="實到減一">−</button>
+                                        <input type="number" value={examData.actualArrive} onChange={(e) => handleInputChange('actualArrive', e.target.value)} className="w-full text-center bg-transparent text-[4vw] font-bold text-green-900 outline-none" placeholder="0" />
+                                        <button onClick={() => adjustCount('actualArrive', 1)} className="btn-active w-12 h-12 rounded-full bg-green-200 text-green-900 font-black text-2xl hover:bg-green-300" aria-label="實到加一">+</button>
+                                    </div>
+                                </div>
+
+                                <div className="flex-[1.5] flex flex-col items-center justify-center p-2">
+                                    <span className="text-[1.5vw] font-bold text-red-800">未到</span>
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <div className="text-[4vw] font-bold text-red-600">
+                                            {Math.max(0, (parseInt(examData.shouldArrive, 10) || 0) - (parseInt(examData.actualArrive, 10) || 0))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="w-1/2 bg-[#fffdf0] flex flex-col relative overflow-hidden">
+                            <div className="absolute top-0 left-0 bg-yellow-400 text-yellow-900 px-4 py-2 text-xl font-bold rounded-br-lg z-20 shadow-sm">
+                                提醒事項
+                            </div>
+
+                            {isTeacherMode && (
+                                <div className="absolute top-2 right-3 z-20 flex flex-wrap justify-end gap-2 max-w-[72%]">
+                                    <div className="flex rounded-xl overflow-hidden border border-yellow-300 bg-white shadow-sm">
+                                        <button onClick={() => setReminderDisplayMode('text')} className={`px-3 py-2 text-sm font-bold ${reminderSettings.displayMode === 'text' ? 'bg-yellow-400 text-yellow-900' : 'bg-white text-gray-600'}`}>
+                                            文字版
+                                        </button>
+                                        <button onClick={() => setReminderDisplayMode('image')} className={`px-3 py-2 text-sm font-bold ${reminderSettings.displayMode === 'image' ? 'bg-yellow-400 text-yellow-900' : 'bg-white text-gray-600'}`}>
+                                            圖畫版
+                                        </button>
+                                    </div>
+
+                                    <div className="flex rounded-xl overflow-hidden border border-blue-200 bg-white shadow-sm">
+                                        <button onClick={() => setReminderSelectionMode('auto')} className={`px-3 py-2 text-sm font-bold ${reminderSettings.selectionMode === 'auto' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600'}`}>
+                                            自動輪播
+                                        </button>
+                                        <button onClick={() => setReminderSelectionMode('manual')} className={`px-3 py-2 text-sm font-bold ${reminderSettings.selectionMode === 'manual' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600'}`}>
+                                            手動指定
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className={`px-4 pb-4 flex-1 flex flex-col gap-3 min-h-0 ${isTeacherMode ? 'pt-16' : 'pt-6'}`}>
+                                {isTeacherMode && reminderSettings.selectionMode === 'manual' && (
+                                    <div className="bg-white/90 border border-yellow-200 rounded-2xl px-4 py-3 shadow-sm">
+                                        <div className="text-sm font-bold text-gray-600 mb-2">選擇要顯示的提醒項目</div>
+                                        <select
+                                            value={manualOptions.includes(reminderSettings.manualMessage) ? reminderSettings.manualMessage : manualOptions[0]}
+                                            onChange={(e) => setManualReminderMessage(e.target.value)}
+                                            className="w-full rounded-xl border border-gray-300 px-3 py-3 text-base font-bold outline-none focus:border-blue-500 bg-white"
+                                        >
+                                            {manualOptions.map((message) => (
+                                                <option key={message} value={message}>{message}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div className="flex-1 min-h-0 flex items-center justify-center">
+                                    {reminderSettings.displayMode === 'text' ? (
+                                        <div key={activeReminderMessage} className="w-full h-full animate-fade-in flex items-center justify-center">
+                                            <div className="w-full h-full rounded-[2rem] border-[10px] border-yellow-100 bg-white shadow-md px-8 py-6 flex flex-col items-center justify-center text-center">
+                                                <div className="text-[1.4vw] font-bold tracking-[0.3em] text-yellow-600 mb-4">提醒事項</div>
+                                                <div className="text-[3.1vw] leading-[1.35] font-black text-gray-800 text-shadow whitespace-pre-wrap break-words">
+                                                    {activeReminderMessage}
+                                                </div>
+                                                <div className="mt-5 text-[1.1vw] text-gray-400 font-bold">
+                                                    {reminderSettings.selectionMode === 'auto' ? '依照時段自動輪播' : '目前為手動指定顯示'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div key={activeReminderMessage + (reminderImageSrc || 'no-image')} className="w-full h-full flex items-center justify-center animate-fade-in">
+                                            {reminderImageSrc ? (
+                                                <img
+                                                    src={reminderImageSrc}
+                                                    alt={activeReminderMessage}
+                                                    className="max-w-full max-h-full object-contain rounded-2xl shadow-md select-none"
+                                                    draggable="false"
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.style.display = 'none';
+                                                        const fallback = e.currentTarget.parentElement?.querySelector('.image-fallback-text');
+                                                        if (fallback) fallback.classList.remove('hidden');
+                                                    }}
+                                                />
+                                            ) : null}
+
+                                            <div className={`image-fallback-text ${reminderImageSrc ? 'hidden' : ''} w-full h-full rounded-[2rem] border-[8px] border-yellow-100 bg-white shadow-md px-8 py-6 flex items-center justify-center text-center`}>
+                                                <div className="text-[2.6vw] leading-[1.4] font-black text-gray-800 whitespace-pre-wrap break-words">
+                                                    {activeReminderMessage}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="h-4 bg-stripes w-full"></div>
+                        </div>
+                    </div>
+
+                    <style>{`
+                        .bg-stripes {
+                            background-image: linear-gradient(45deg, #fbbf24 25%, transparent 25%, transparent 50%, #fbbf24 50%, #fbbf24 75%, transparent 75%, transparent);
+                            background-size: 20px 20px;
+                        }
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        .animate-fade-in {
+                            animation: fadeIn 0.35s ease-out forwards;
+                        }
+                    `}</style>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
