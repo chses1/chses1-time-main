@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中山國小學期評量看板系統</title>
+    <title>中山國小學期評量看板系統v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -55,39 +55,39 @@
         const EXAM_SLOTS = SCHEDULE.filter(s => s.type === 'exam');
 
         const EXAM_MESSAGES = [
-            "考卷記得寫上班級姓名座號",
-            "有問題舉手問老師，需要撿東西請監考老師幫忙",
-            "不會寫的題目跳過，寫會的題目",
-            "耐心、細心、小心",
-            "考卷有問題，等出題老師來說明",
-            "不要轉頭玩東西，寫完多檢查",
-            "檢查完再檢查或趴下休息",
-            "考試即將結束，檢查有沒有寫答案抄錯"
+            "考卷記得寫上\n班級、姓名、座號",
+            "有問題請舉手，\n撿東西請監考老師幫忙",
+            "不會寫的題目跳過，\n寫會的題目",
+            "耐心、專心、細心",
+            "考卷有問題，\n等出題老師來說明",
+            "不要轉頭或玩東西，\n寫完多檢查",
+            "檢查完、再檢查，\n或趴下休息",
+            "考試即將結束，\n檢查有沒有寫錯答案"
         ];
 
         const BREAK_MESSAGES = [
-            "等監考老師喊下課，再離開座位",
-            "利用下課準備下個科目與文具用品",
+            "等監考老師喊下課，\n才能離開座位",
+            "利用下課時間\n準備下個科目與用品",
             "提早上廁所和喝水",
-            "桌面淨空，準備迎接考試",
-            "準備考試、收拾位置、坐在位置上"
+            "收拾桌面，\n不要放水壺",
+            "準備考試，\n等待監考老師發卷"
         ];
 
         // 後續若同一提醒要輪播多張圖，只要在陣列內增加檔名即可。
         const MESSAGE_IMAGE_MAP = {
-            "考卷記得寫上班級姓名座號": ["./message01.jpeg"],
-            "有問題舉手問老師，需要撿東西請監考老師幫忙": ["./message02.jpeg"],
-            "不會寫的題目跳過，寫會的題目": ["./message03.jpeg"],
-            "耐心、細心、小心": ["./message04.jpeg"],
-            "考卷有問題，等出題老師來說明": ["./message05.jpeg"],
-            "不要轉頭玩東西，寫完多檢查": ["./message06.jpeg"],
-            "檢查完再檢查或趴下休息": ["./message07.jpeg"],
-            "考試即將結束，檢查有沒有寫答案抄錯": ["./message08.jpeg"],
-            "等監考老師喊下課，再離開座位": ["./message09.jpeg"],
-            "利用下課準備下個科目與文具用品": ["./message10.jpeg"],
+            "考卷記得寫上\n班級、姓名、座號": ["./message01.jpeg"],
+            "有問題請舉手，\n撿東西請監考老師幫忙": ["./message02.jpeg"],
+            "不會寫的題目跳過，\n寫會的題目": ["./message03.jpeg"],
+            "耐心、專心、細心": ["./message04.jpeg"],
+            "考卷有問題，\n等出題老師來說明": ["./message05.jpeg"],
+            "不要轉頭或玩東西，\n寫完多檢查": ["./message06.jpeg"],
+            "檢查完、再檢查，\n或趴下休息": ["./message07.jpeg"],
+            "考試即將結束，\n檢查有沒有寫錯答案": ["./message08.jpeg"],
+            "等監考老師喊下課，\n才能離開座位": ["./message09.jpeg"],
+            "利用下課時間\n準備下個科目與用品": ["./message10.jpeg"],
             "提早上廁所和喝水": ["./message11.jpeg"],
-            "桌面淨空，準備迎接考試": ["./message12.jpeg"],
-            "準備考試、收拾位置、坐在位置上": ["./message13.jpeg"]
+            "收拾桌面，\n不要放水壺": ["./message12.jpeg"],
+            "準備考試、\n等待監考老師發卷": ["./message13.jpeg"]
         };
 
         const ALL_REMINDER_MESSAGES = [...EXAM_MESSAGES, ...BREAK_MESSAGES];
