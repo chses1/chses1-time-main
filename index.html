@@ -358,6 +358,11 @@
                 setOffset(prev => prev + (seconds * 1000));
             };
 
+            const resetTime = () => {
+                setOffset(0);
+                setNow(new Date());
+            };
+
             const handleFileSelect = (index, e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -491,6 +496,12 @@
                                         <button onClick={() => adjustTime(-30)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">-30秒</button>
                                         <button onClick={() => adjustTime(30)} className="btn-active flex-1 py-1 bg-gray-200 rounded text-xs hover:bg-gray-300">+30秒</button>
                                     </div>
+                                    <button
+                                        onClick={resetTime}
+                                        className="btn-active col-span-2 py-1.5 bg-indigo-100 text-indigo-700 rounded text-xs font-bold hover:bg-indigo-200"
+                                    >
+                                        重設為系統時間
+                                    </button>
                                 </div>
                             )}
                         </div>
