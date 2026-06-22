@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+body {
+  font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+  overflow: hidden;
+  background-color: #f3f4f6;
+}
+
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.hidden-input {
+  display: none;
+}
+
+.btn-active:active {
+  transform: scale(0.95);
+}
+
+.track-transition {
+  transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+}
+
+select,
+button,
+input {
+  touch-action: manipulation;
+}
