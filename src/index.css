@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,13 +34,13 @@ body {
 
 .time-display {
   color: #1f2937;
-  font-family: "Avenir Next", "Helvetica Neue", "DIN Alternate", "Arial Rounded MT Bold", "Microsoft JhengHei", sans-serif;
-  font-weight: 800;
+  font-family: "Playfair Display", "Times New Roman", "PMingLiU", serif;
+  font-weight: 900;
   font-variant-numeric: tabular-nums lining-nums;
   white-space: nowrap;
-  letter-spacing: 0.015em;
+  letter-spacing: 0;
   max-width: 100%;
-  text-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+  text-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
 }
 
 .subject-select {
