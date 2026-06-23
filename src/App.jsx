@@ -81,6 +81,8 @@ const App = () => {
     const audioRefs = useRef([]);
     const fileInputRefs = useRef([]);
     const wakeLockRef = useRef(null);
+    const timePanelRef = useRef(null);
+    const timeTextRef = useRef(null);
 
     const [examData, setExamData] = useState(() => {
         const saved = localStorage.getItem('exam_data');
@@ -127,6 +129,7 @@ const App = () => {
     });
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
+    const [timeFontSize, setTimeFontSize] = useState(150);
 
     const isTeacherMode = viewMode === 'teacher';
 
@@ -159,6 +162,49 @@ const App = () => {
     useEffect(() => {
         localStorage.setItem('board_view_mode', viewMode);
     }, [viewMode]);
+
+    useEffect(() => {
+        const panel = timePanelRef.current;
+        const text = timeTextRef.current;
+        if (!panel || !text) return;
+
+        let frameId = null;
+
+        const fitTimeText = () => {
+            frameId = null;
+            const panelRect = panel.getBoundingClientRect();
+            const textRect = text.getBoundingClientRect();
+            const currentSize = parseFloat(window.getComputedStyle(text).fontSize) || timeFontSize;
+
+            if (!panelRect.width || !panelRect.height || !textRect.width || !textRect.height) return;
+
+            const availableWidth = Math.max(120, panelRect.width - 28);
+            const availableHeight = Math.max(90, panelRect.height - (isTeacherMode ? 108 : 30));
+            const widthFit = currentSize * (availableWidth / textRect.width);
+            const heightFit = currentSize * (availableHeight / textRect.height);
+            const nextSize = Math.floor(Math.max(96, Math.min(widthFit, heightFit, 320)) * 0.96);
+
+            setTimeFontSize(prev => Math.abs(prev - nextSize) > 1 ? nextSize : prev);
+        };
+
+        const scheduleFit = () => {
+            if (frameId) cancelAnimationFrame(frameId);
+            frameId = requestAnimationFrame(fitTimeText);
+        };
+
+        const observer = new ResizeObserver(scheduleFit);
+        observer.observe(panel);
+        scheduleFit();
+
+        if (document.fonts?.ready) {
+            document.fonts.ready.then(scheduleFit).catch(() => {});
+        }
+
+        return () => {
+            observer.disconnect();
+            if (frameId) cancelAnimationFrame(frameId);
+        };
+    }, [isTeacherMode, isFullscreen, timeFontSize]);
 
     useEffect(() => {
         const syncFullscreenState = () => {
@@ -545,8 +591,12 @@ const App = () => {
                 )}
             </div>
             <div className="h-[40vh] w-full bg-white border-b-4 border-gray-300 flex flex-row relative shadow-lg z-10">
-                <div className={`w-[42%] flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-3 ${isTeacherMode ? 'group' : ''}`}>
-                    <div className="text-[clamp(96px,9vw,210px)] font-black leading-none text-gray-800 tabular-nums tracking-tighter mb-3">
+                <div ref={timePanelRef} className={`w-[42%] flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-2 overflow-hidden ${isTeacherMode ? 'group' : ''}`}>
+                    <div
+                        ref={timeTextRef}
+                        className="time-display font-black leading-none text-gray-800 tabular-nums mb-3"
+                        style={{ fontSize: `${timeFontSize}px` }}
+                    >
                         {formatTime(adjustedNow)}
                     </div>
                     {isTeacherMode && (
