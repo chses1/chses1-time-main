@@ -57,6 +57,13 @@ const formatTime = (date) => {
     return `${hours}:${minutes}:${seconds}`;
 };
 
+const formatAudioTime = (seconds) => {
+    if (!Number.isFinite(seconds) || seconds < 0) return '--:--';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
 const getDefaultReminderSettings = () => ({
     displayMode: 'image',
     selectionMode: 'auto',
@@ -73,9 +80,9 @@ const App = () => {
     });
 
     const [audioTracks, setAudioTracks] = useState([
-        { src: null, fileName: "", isPlaying: false, progress: 0 },
-        { src: null, fileName: "", isPlaying: false, progress: 0 },
-        { src: null, fileName: "", isPlaying: false, progress: 0 }
+        { src: null, fileName: "", isPlaying: false, progress: 0, currentTime: 0, duration: 0 },
+        { src: null, fileName: "", isPlaying: false, progress: 0, currentTime: 0, duration: 0 },
+        { src: null, fileName: "", isPlaying: false, progress: 0, currentTime: 0, duration: 0 }
     ]);
 
     const audioRefs = useRef([]);
@@ -466,7 +473,7 @@ const App = () => {
             setAudioTracks(prev => {
                 const newTracks = [...prev];
                 if (newTracks[index].src) URL.revokeObjectURL(newTracks[index].src);
-                newTracks[index] = { src: url, fileName: file.name, isPlaying: false, progress: 0 };
+                newTracks[index] = { src: url, fileName: file.name, isPlaying: false, progress: 0, currentTime: 0, duration: 0 };
                 return newTracks;
             });
         }
@@ -521,6 +528,7 @@ const App = () => {
             const newTracks = [...prev];
             newTracks[index].isPlaying = false;
             newTracks[index].progress = 0;
+            newTracks[index].currentTime = 0;
             return newTracks;
         });
     };
@@ -531,7 +539,38 @@ const App = () => {
         const percent = (duration > 0) ? (current / duration) * 100 : 0;
         setAudioTracks(prev => {
             const newTracks = [...prev];
-            newTracks[index] = { ...newTracks[index], progress: percent };
+            newTracks[index] = { ...newTracks[index], progress: percent, currentTime: current, duration: Number.isFinite(duration) ? duration : 0 };
+            return newTracks;
+        });
+    };
+
+    const handleAudioMetadata = (index, e) => {
+        const duration = e.target.duration;
+        setAudioTracks(prev => {
+            const newTracks = [...prev];
+            newTracks[index] = { ...newTracks[index], duration: Number.isFinite(duration) ? duration : 0 };
+            return newTracks;
+        });
+    };
+
+    const seekAudio = (index, value) => {
+        const audioEl = audioRefs.current[index];
+        const nextProgress = Math.min(100, Math.max(0, parseFloat(value) || 0));
+        const duration = audioEl?.duration;
+
+        if (audioEl && Number.isFinite(duration) && duration > 0) {
+            audioEl.currentTime = (nextProgress / 100) * duration;
+        }
+
+        setAudioTracks(prev => {
+            const newTracks = [...prev];
+            const trackDuration = Number.isFinite(duration) && duration > 0 ? duration : newTracks[index].duration;
+            newTracks[index] = {
+                ...newTracks[index],
+                progress: nextProgress,
+                currentTime: trackDuration > 0 ? (nextProgress / 100) * trackDuration : 0,
+                duration: trackDuration || 0
+            };
             return newTracks;
         });
     };
@@ -721,8 +760,21 @@ const App = () => {
                                         </div>
 
                                         {audioTracks[index].src && (
-                                            <div className="w-full h-1 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                                                <div className="h-full bg-blue-500 transition-all duration-200 ease-linear" style={{ width: `${audioTracks[index].progress}%` }}></div>
+                                            <div className="w-full mt-1 flex flex-col gap-0.5">
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    step="0.1"
+                                                    value={audioTracks[index].progress}
+                                                    onChange={(e) => seekAudio(index, e.target.value)}
+                                                    className="audio-range"
+                                                    style={{ '--audio-progress': `${audioTracks[index].progress}%` }}
+                                                    aria-label={`第${index + 1}節聽力播放進度`}
+                                                />
+                                                <div className="text-[0.72rem] leading-none text-gray-500 font-bold text-right tabular-nums">
+                                                    {formatAudioTime(audioTracks[index].currentTime)} / {audioTracks[index].duration > 0 ? formatAudioTime(audioTracks[index].duration) : '--:--'}
+                                                </div>
                                             </div>
                                         )}
 
@@ -731,6 +783,7 @@ const App = () => {
                                             src={audioTracks[index].src || undefined}
                                             onEnded={() => handleAudioEnded(index)}
                                             onTimeUpdate={(e) => handleTimeUpdate(index, e)}
+                                            onLoadedMetadata={(e) => handleAudioMetadata(index, e)}
                                             hidden
                                         />
                                     </div>
