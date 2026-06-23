@@ -594,7 +594,7 @@ const App = () => {
                 <div ref={timePanelRef} className={`w-[42%] flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-2 overflow-hidden ${isTeacherMode ? 'group' : ''}`}>
                     <div
                         ref={timeTextRef}
-                        className="time-display font-black leading-none text-gray-800 tabular-nums mb-3"
+                        className="time-display leading-none tabular-nums mb-3"
                         style={{ fontSize: `${timeFontSize}px` }}
                     >
                         {formatTime(adjustedNow)}
