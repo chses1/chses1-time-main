@@ -30,6 +30,15 @@ body {
   transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
 }
 
+.subject-select {
+  text-align: center;
+  text-align-last: center;
+}
+
+.subject-select option {
+  text-align: center;
+}
+
 select,
 button,
 input {

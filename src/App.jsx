@@ -125,6 +125,8 @@ const App = () => {
         const saved = localStorage.getItem('board_view_mode');
         return saved || getDefaultViewMode();
     });
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
 
     const isTeacherMode = viewMode === 'teacher';
 
@@ -159,6 +161,20 @@ const App = () => {
     }, [viewMode]);
 
     useEffect(() => {
+        const syncFullscreenState = () => {
+            setIsFullscreen(Boolean(document.fullscreenElement));
+        };
+
+        setFullscreenAvailable(Boolean(document.fullscreenEnabled && document.documentElement.requestFullscreen));
+        syncFullscreenState();
+        document.addEventListener('fullscreenchange', syncFullscreenState);
+
+        return () => {
+            document.removeEventListener('fullscreenchange', syncFullscreenState);
+        };
+    }, []);
+
+    useEffect(() => {
         let cancelled = false;
 
         const releaseWakeLock = async () => {
@@ -176,7 +192,9 @@ const App = () => {
         };
 
         const requestWakeLock = async () => {
-            if (viewMode !== 'student' || document.visibilityState !== 'visible') {
+            const shouldKeepAwake = viewMode === 'student' || isFullscreen;
+
+            if (!shouldKeepAwake || document.visibilityState !== 'visible') {
                 await releaseWakeLock();
                 return;
             }
@@ -189,7 +207,7 @@ const App = () => {
             try {
                 const wakeLock = await navigator.wakeLock.request('screen');
 
-                if (cancelled || viewMode !== 'student' || document.visibilityState !== 'visible') {
+                if (cancelled || (!shouldKeepAwake) || document.visibilityState !== 'visible') {
                     await wakeLock.release();
                     return;
                 }
@@ -229,7 +247,7 @@ const App = () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             releaseWakeLock();
         };
-    }, [viewMode]);
+    }, [viewMode, isFullscreen]);
 
     const adjustedNow = useMemo(() => {
         return new Date(now.getTime() + offset);
@@ -484,6 +502,20 @@ const App = () => {
         setReminderSettings(prev => ({ ...prev, manualMessage }));
     };
 
+    const toggleFullscreen = async () => {
+        if (!fullscreenAvailable) return;
+
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+            } else {
+                await document.documentElement.requestFullscreen();
+            }
+        } catch (error) {
+            console.warn('Unable to toggle fullscreen mode.', error);
+        }
+    };
+
     const manualOptions = reminderSettings.displayMode === 'image'
         ? ALL_REMINDER_MESSAGES.filter(message => (MESSAGE_IMAGE_MAP[message] || []).length > 0)
         : ALL_REMINDER_MESSAGES;
@@ -503,11 +535,18 @@ const App = () => {
                 >
                     教師模式
                 </button>
+                {fullscreenAvailable && (
+                    <button
+                        onClick={toggleFullscreen}
+                        className={`px-3 py-1.5 text-xs font-bold transition-colors ${isFullscreen ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        {isFullscreen ? '離開全螢幕' : '全螢幕'}
+                    </button>
+                )}
             </div>
-            <div className="h-[33vh] w-full bg-white border-b-4 border-gray-300 flex flex-row relative shadow-lg z-10">
-                <div className={`w-1/3 flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-2 ${isTeacherMode ? 'group' : ''}`}>
-                    <div className="text-[1.5vw] text-gray-500 font-bold mb-1 tracking-widest">現在時間</div>
-                    <div className="text-[clamp(80px,7vw,170px)] font-black leading-none text-gray-800 tabular-nums tracking-tighter mb-2">
+            <div className="h-[40vh] w-full bg-white border-b-4 border-gray-300 flex flex-row relative shadow-lg z-10">
+                <div className={`w-[42%] flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-3 ${isTeacherMode ? 'group' : ''}`}>
+                    <div className="text-[clamp(96px,9vw,210px)] font-black leading-none text-gray-800 tabular-nums tracking-tighter mb-3">
                         {formatTime(adjustedNow)}
                     </div>
                     {isTeacherMode && (
@@ -538,9 +577,9 @@ const App = () => {
                     )}
                 </div>
 
-                <div className="w-2/3 flex flex-col relative bg-gray-100 items-center justify-center p-4">
+                <div className="w-[58%] flex flex-col relative bg-gray-100 items-center justify-center p-5">
                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <span className="text-[4vw] font-bold text-gray-500 opacity-60 select-none whitespace-nowrap drop-shadow-sm">
+                        <span className="text-[clamp(34px,4.2vw,82px)] font-bold text-gray-500 opacity-60 select-none whitespace-nowrap drop-shadow-sm">
                             {progressInfo.text}
                         </span>
                     </div>
@@ -560,7 +599,7 @@ const App = () => {
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-row h-[67vh]">
+            <div className="flex-1 flex flex-row h-[60vh]">
                 <div className="w-1/2 flex flex-col border-r-4 border-gray-300 bg-white overflow-hidden">
                     <div className="h-2/3 flex flex-col border-b-2 border-dashed border-gray-300">
                         {EXAM_SLOTS.map((slot, index) => {
@@ -572,7 +611,7 @@ const App = () => {
                                         <select
                                             value={examData.subjects[index] || ""}
                                             onChange={(e) => handleSubjectChange(index, e.target.value)}
-                                            className="w-full text-[2.8vw] font-black bg-transparent border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none placeholder-gray-300 leading-tight text-black"
+                                            className="subject-select w-full text-center text-[2.8vw] font-black bg-transparent border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none placeholder-gray-300 leading-tight text-black"
                                         >
                                             {["國語","數學","社會","自然","英文","正常上課"].map((subj) => (
                                                 <option key={subj} value={subj}>{subj}</option>
