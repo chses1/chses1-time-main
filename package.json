@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build && node scripts/inline-dist.js",
+    "dev": "node scripts/write-vite-template.js && vite --host 127.0.0.1",
+    "build": "node scripts/write-vite-template.js && vite build && node scripts/inline-dist.js",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

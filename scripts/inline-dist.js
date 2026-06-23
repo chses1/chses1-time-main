@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const distDir = resolve(root, 'dist');
 const indexPath = resolve(distDir, 'index.html');
+const rootIndexPath = resolve(root, 'index.html');
 
 let html = readFileSync(indexPath, 'utf8');
 
@@ -28,3 +29,4 @@ html = html.replace(
 );
 
 writeFileSync(indexPath, html, 'utf8');
+writeFileSync(rootIndexPath, html, 'utf8');
