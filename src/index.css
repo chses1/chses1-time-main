@@ -34,6 +34,9 @@ body {
 
 .time-display {
   color: #1f2937;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
   font-family: "Playfair Display", "Times New Roman", "PMingLiU", serif;
   font-weight: 900;
   font-variant-numeric: tabular-nums lining-nums;
@@ -41,6 +44,22 @@ body {
   letter-spacing: 0;
   max-width: 100%;
   text-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+}
+
+.time-digit,
+.time-separator {
+  display: inline-block;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+.time-digit {
+  width: 0.62em;
+}
+
+.time-separator {
+  width: 0.28em;
+  transform: translateY(-0.03em);
 }
 
 .subject-select {

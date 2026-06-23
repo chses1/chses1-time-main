@@ -596,8 +596,17 @@ const App = () => {
                         ref={timeTextRef}
                         className="time-display leading-none tabular-nums mb-3"
                         style={{ fontSize: `${timeFontSize}px` }}
+                        aria-label={formatTime(adjustedNow)}
                     >
-                        {formatTime(adjustedNow)}
+                        {formatTime(adjustedNow).split('').map((char, index) => (
+                            <span
+                                key={index}
+                                className={char === ':' ? 'time-separator' : 'time-digit'}
+                                aria-hidden="true"
+                            >
+                                {char}
+                            </span>
+                        ))}
                     </div>
                     {isTeacherMode && (
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 opacity-20 group-hover:opacity-100 transition-opacity w-full max-w-[260px]">
