@@ -80,6 +80,7 @@ const App = () => {
 
     const audioRefs = useRef([]);
     const fileInputRefs = useRef([]);
+    const wakeLockRef = useRef(null);
 
     const [examData, setExamData] = useState(() => {
         const saved = localStorage.getItem('exam_data');
@@ -155,6 +156,79 @@ const App = () => {
 
     useEffect(() => {
         localStorage.setItem('board_view_mode', viewMode);
+    }, [viewMode]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const releaseWakeLock = async () => {
+            const wakeLock = wakeLockRef.current;
+            wakeLockRef.current = null;
+
+            if (!wakeLock) return;
+
+            try {
+                await wakeLock.release();
+                console.info('Screen wake lock released.');
+            } catch (error) {
+                console.warn('Unable to release screen wake lock.', error);
+            }
+        };
+
+        const requestWakeLock = async () => {
+            if (viewMode !== 'student' || document.visibilityState !== 'visible') {
+                await releaseWakeLock();
+                return;
+            }
+
+            if (!('wakeLock' in navigator)) {
+                console.info('Screen Wake Lock API is not supported in this browser.');
+                return;
+            }
+
+            try {
+                const wakeLock = await navigator.wakeLock.request('screen');
+
+                if (cancelled || viewMode !== 'student' || document.visibilityState !== 'visible') {
+                    await wakeLock.release();
+                    return;
+                }
+
+                if (wakeLockRef.current && wakeLockRef.current !== wakeLock) {
+                    await releaseWakeLock();
+                }
+
+                wakeLockRef.current = wakeLock;
+                console.info('Screen wake lock requested.');
+
+                wakeLock.addEventListener('release', () => {
+                    if (wakeLockRef.current === wakeLock) {
+                        wakeLockRef.current = null;
+                    }
+                });
+            } catch (error) {
+                if (!cancelled) {
+                    console.warn('Unable to request screen wake lock.', error);
+                }
+            }
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                requestWakeLock();
+            } else {
+                releaseWakeLock();
+            }
+        };
+
+        requestWakeLock();
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            cancelled = true;
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            releaseWakeLock();
+        };
     }, [viewMode]);
 
     const adjustedNow = useMemo(() => {
