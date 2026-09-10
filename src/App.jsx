@@ -31,24 +31,35 @@ const BREAK_MESSAGES = [
     "準備考試，\n等待監考老師發卷"
 ];
 
-// 後續若同一提醒要輪播多張圖，只要在陣列內增加檔名即可。
-const MESSAGE_IMAGE_MAP = {
-    "考卷記得寫上\n班級、姓名、座號": ["./message01.jpeg"],
-    "有問題請舉手，\n撿東西請監考老師幫忙": ["./message02.jpeg"],
-    "不會寫的題目跳過，\n寫會的題目": ["./message03.jpeg"],
-    "耐心、專心、細心": ["./message04.jpeg"],
-    "考卷有問題，\n等出題老師來說明": ["./message05.jpeg"],
-    "不要轉頭或玩東西，\n寫完多檢查": ["./message06.jpeg"],
-    "檢查完、再檢查，\n或趴下休息": ["./message07.jpeg"],
-    "考試即將結束，\n檢查有沒有寫錯答案": ["./message08.jpeg"],
-    "等監考老師喊下課，\n才能離開座位": ["./message09.jpeg"],
-    "利用下課時間\n準備下個科目與文具用品": ["./message10.jpeg"],
-    "提早上廁所和喝水": ["./message11.jpeg"],
-    "收拾桌面，\n不要放水壺": ["./message12.jpeg"],
-    "準備考試，\n等待監考老師發卷": ["./message13.jpeg"]
+const ALL_REMINDER_MESSAGES = [...EXAM_MESSAGES, ...BREAK_MESSAGES];
+
+const createThemeImageMap = (imagePaths) => Object.fromEntries(
+    ALL_REMINDER_MESSAGES.map((message, index) => [message, [imagePaths[index]]])
+);
+
+// 各主題都以 ALL_REMINDER_MESSAGES 的順序對應，確保圖畫版與文字版輪播順序一致。
+const REMINDER_IMAGE_THEMES = {
+    zhongshan: {
+        label: '中山校園風格',
+        images: createThemeImageMap([
+            './message01.jpeg', './message02.jpeg', './message03.jpeg', './message04.jpeg', './message05.jpeg',
+            './message06.jpeg', './message07.jpeg', './message08.jpeg', './message09.jpeg', './message10.jpeg',
+            './message11.jpeg', './message12.jpeg', './message13.jpeg'
+        ])
+    },
+    capybara: {
+        label: '卡皮巴拉風格',
+        images: createThemeImageMap([
+            './themes/capybara/message01.png', './themes/capybara/message02.png', './themes/capybara/message03.png',
+            './themes/capybara/message04.png', './themes/capybara/message05.png', './themes/capybara/message06.png',
+            './themes/capybara/message07.png', './themes/capybara/message08.png', './themes/capybara/message09.png',
+            './themes/capybara/message10.png', './themes/capybara/message11.png', './themes/capybara/message12.png',
+            './themes/capybara/message13.png'
+        ])
+    }
 };
 
-const ALL_REMINDER_MESSAGES = [...EXAM_MESSAGES, ...BREAK_MESSAGES];
+const DEFAULT_IMAGE_THEME = 'zhongshan';
 
 const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0');
@@ -67,7 +78,8 @@ const formatAudioTime = (seconds) => {
 const getDefaultReminderSettings = () => ({
     displayMode: 'image',
     selectionMode: 'auto',
-    manualMessage: EXAM_MESSAGES[0]
+    manualMessage: EXAM_MESSAGES[0],
+    imageTheme: DEFAULT_IMAGE_THEME
 });
 
 const getDefaultViewMode = () => 'student';
@@ -349,9 +361,13 @@ const App = () => {
         return autoReminderMessage;
     }, [reminderSettings, autoReminderMessage]);
 
+    const activeImageTheme = REMINDER_IMAGE_THEMES[reminderSettings.imageTheme]
+        ? reminderSettings.imageTheme
+        : DEFAULT_IMAGE_THEME;
+
     const activeReminderImages = useMemo(() => {
-        return MESSAGE_IMAGE_MAP[activeReminderMessage] || [];
-    }, [activeReminderMessage]);
+        return REMINDER_IMAGE_THEMES[activeImageTheme].images[activeReminderMessage] || [];
+    }, [activeImageTheme, activeReminderMessage]);
 
     const reminderImageSrc = useMemo(() => {
         if (!activeReminderImages.length) return null;
@@ -587,6 +603,11 @@ const App = () => {
         setReminderSettings(prev => ({ ...prev, manualMessage }));
     };
 
+    const setReminderImageTheme = (imageTheme) => {
+        if (!REMINDER_IMAGE_THEMES[imageTheme]) return;
+        setReminderSettings(prev => ({ ...prev, imageTheme }));
+    };
+
     const toggleFullscreen = async () => {
         if (!fullscreenAvailable) return;
 
@@ -602,7 +623,7 @@ const App = () => {
     };
 
     const manualOptions = reminderSettings.displayMode === 'image'
-        ? ALL_REMINDER_MESSAGES.filter(message => (MESSAGE_IMAGE_MAP[message] || []).length > 0)
+        ? ALL_REMINDER_MESSAGES.filter(message => (REMINDER_IMAGE_THEMES[activeImageTheme].images[message] || []).length > 0)
         : ALL_REMINDER_MESSAGES;
 
     return (
@@ -837,6 +858,22 @@ const App = () => {
                                     圖畫版
                                 </button>
                             </div>
+
+                            {reminderSettings.displayMode === 'image' && (
+                                <label className="flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-900 shadow-sm">
+                                    主題
+                                    <select
+                                        value={activeImageTheme}
+                                        onChange={(e) => setReminderImageTheme(e.target.value)}
+                                        className="min-w-[8.5rem] cursor-pointer bg-transparent font-bold text-gray-700 outline-none"
+                                        aria-label="選擇圖畫主題"
+                                    >
+                                        {Object.entries(REMINDER_IMAGE_THEMES).map(([themeId, theme]) => (
+                                            <option key={themeId} value={themeId}>{theme.label}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                            )}
 
                             <div className="flex rounded-xl overflow-hidden border border-blue-200 bg-white shadow-sm">
                                 <button onClick={() => setReminderSelectionMode('auto')} className={`px-3 py-2 text-sm font-bold ${reminderSettings.selectionMode === 'auto' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600'}`}>
