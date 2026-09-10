@@ -651,7 +651,7 @@ const App = () => {
                 )}
             </div>
             <div className="h-[40vh] w-full bg-white border-b-4 border-gray-300 flex flex-row relative shadow-lg z-10">
-                <div ref={timePanelRef} className={`w-[42%] flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-2 overflow-hidden ${isTeacherMode ? 'group' : ''}`}>
+                <div ref={timePanelRef} className={`w-1/2 flex flex-col items-center justify-center border-r border-gray-200 bg-gray-50 relative px-2 overflow-hidden ${isTeacherMode ? 'group' : ''}`}>
                     <div
                         ref={timeTextRef}
                         className="time-display leading-none tabular-nums mb-3"
@@ -696,7 +696,7 @@ const App = () => {
                     )}
                 </div>
 
-                <div className="w-[58%] flex flex-col relative bg-gray-100 items-center justify-center p-5">
+                <div className="w-1/2 flex flex-col relative bg-gray-100 items-center justify-center p-5">
                     <div className="absolute inset-0 flex items-center justify-center z-10">
                         <span className="text-[clamp(34px,4.2vw,82px)] font-bold text-gray-500 opacity-60 select-none whitespace-nowrap drop-shadow-sm">
                             {progressInfo.text}
