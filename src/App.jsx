@@ -56,6 +56,16 @@ const REMINDER_IMAGE_THEMES = {
             './themes/capybara/message10.png', './themes/capybara/message11.png', './themes/capybara/message12.png',
             './themes/capybara/message13.png'
         ])
+    },
+    doraemon: {
+        label: '多拉A夢人物風格',
+        images: createThemeImageMap([
+            './themes/doraemon/message01.png', './themes/doraemon/message02.png', './themes/doraemon/message03.png',
+            './themes/doraemon/message04.png', './themes/doraemon/message05.png', './themes/doraemon/message06.png',
+            './themes/doraemon/message07.png', './themes/doraemon/message08.png', './themes/doraemon/message09.png',
+            './themes/doraemon/message10.png', './themes/doraemon/message11.png', './themes/doraemon/message12.png',
+            './themes/doraemon/message13.png'
+        ])
     }
 };
 
@@ -919,7 +929,7 @@ const App = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div key={activeReminderMessage + (reminderImageSrc || 'no-image')} className="w-full h-full flex items-center justify-center animate-fade-in">
+                                <div key={activeReminderMessage + (reminderImageSrc || 'no-image')} className="relative w-full h-full flex items-center justify-center animate-fade-in">
                                     {reminderImageSrc ? (
                                         <img
                                             src={reminderImageSrc}
@@ -934,6 +944,14 @@ const App = () => {
                                             }}
                                         />
                                     ) : null}
+
+                                    {reminderImageSrc && activeImageTheme === 'doraemon' && (
+                                        <div className="pointer-events-none absolute inset-0 flex items-center">
+                                            <div className="w-[52%] px-[5%] text-center text-[2.35vw] leading-[1.35] font-black text-gray-800 whitespace-pre-wrap break-words text-shadow">
+                                                {activeReminderMessage}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className={`image-fallback-text ${reminderImageSrc ? 'hidden' : ''} w-full h-full rounded-[2rem] border-[8px] border-yellow-100 bg-white shadow-md px-8 py-6 flex items-center justify-center text-center`}>
                                         <div className="text-[2.6vw] leading-[1.4] font-black text-gray-800 whitespace-pre-wrap break-words">
