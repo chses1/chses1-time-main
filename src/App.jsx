@@ -859,22 +859,6 @@ const App = () => {
                                 </button>
                             </div>
 
-                            {reminderSettings.displayMode === 'image' && (
-                                <label className="flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-bold text-amber-900 shadow-sm">
-                                    主題
-                                    <select
-                                        value={activeImageTheme}
-                                        onChange={(e) => setReminderImageTheme(e.target.value)}
-                                        className="min-w-[8.5rem] cursor-pointer bg-transparent font-bold text-gray-700 outline-none"
-                                        aria-label="選擇圖畫主題"
-                                    >
-                                        {Object.entries(REMINDER_IMAGE_THEMES).map(([themeId, theme]) => (
-                                            <option key={themeId} value={themeId}>{theme.label}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            )}
-
                             <div className="flex rounded-xl overflow-hidden border border-blue-200 bg-white shadow-sm">
                                 <button onClick={() => setReminderSelectionMode('auto')} className={`px-3 py-2 text-sm font-bold ${reminderSettings.selectionMode === 'auto' ? 'bg-blue-500 text-white' : 'bg-white text-gray-600'}`}>
                                     自動輪播
@@ -886,7 +870,26 @@ const App = () => {
                         </div>
                     )}
 
-                    <div className={`px-4 pb-4 flex-1 flex flex-col gap-3 min-h-0 ${isTeacherMode ? 'pt-16' : 'pt-6'}`}>
+                    <div className={`px-4 pb-4 flex-1 flex flex-col gap-3 min-h-0 ${isTeacherMode ? 'pt-20' : 'pt-6'}`}>
+                        {isTeacherMode && reminderSettings.displayMode === 'image' && (
+                            <div className="shrink-0 flex items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-white/90 px-4 py-3 shadow-sm">
+                                <label htmlFor="image-theme" className="text-sm font-bold text-amber-900 whitespace-nowrap">
+                                    圖畫主題
+                                </label>
+                                <select
+                                    id="image-theme"
+                                    value={activeImageTheme}
+                                    onChange={(e) => setReminderImageTheme(e.target.value)}
+                                    className="min-w-0 flex-1 cursor-pointer rounded-xl border border-amber-300 bg-white px-3 py-2 text-base font-bold text-gray-700 outline-none focus:border-blue-500"
+                                    aria-label="選擇圖畫主題"
+                                >
+                                    {Object.entries(REMINDER_IMAGE_THEMES).map(([themeId, theme]) => (
+                                        <option key={themeId} value={themeId}>{theme.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
                         {isTeacherMode && reminderSettings.selectionMode === 'manual' && (
                             <div className="bg-white/90 border border-yellow-200 rounded-2xl px-4 py-3 shadow-sm">
                                 <div className="text-sm font-bold text-gray-600 mb-2">選擇要顯示的提醒項目</div>
