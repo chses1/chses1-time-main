@@ -56,16 +56,6 @@ const REMINDER_IMAGE_THEMES = {
             './themes/capybara/message10.png', './themes/capybara/message11.png', './themes/capybara/message12.png',
             './themes/capybara/message13.png'
         ])
-    },
-    doraemon: {
-        label: '多拉A夢人物風格',
-        images: createThemeImageMap([
-            './themes/doraemon/message01.jpg', './themes/doraemon/message02.jpg', './themes/doraemon/message03.jpg',
-            './themes/doraemon/message04.jpg', './themes/doraemon/message05.jpg', './themes/doraemon/message06.jpg',
-            './themes/doraemon/message07.jpg', './themes/doraemon/message08.jpg', './themes/doraemon/message09.jpg',
-            './themes/doraemon/message10.jpg', './themes/doraemon/message11.jpg', './themes/doraemon/message12.jpg',
-            './themes/doraemon/message13.jpg'
-        ])
     }
 };
 
