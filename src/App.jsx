@@ -56,10 +56,27 @@ const REMINDER_IMAGE_THEMES = {
             './themes/capybara/message10.jpg', './themes/capybara/message11.jpg', './themes/capybara/message12.jpg',
             './themes/capybara/message13.jpg'
         ])
+    },
+    chiikawa: {
+        label: '吉伊卡哇校園風格',
+        images: createThemeImageMap([
+            './themes/chiikawa/message01.png', './themes/chiikawa/message02.png', './themes/chiikawa/message03.png',
+            './themes/chiikawa/message04.png', './themes/chiikawa/message05.png', './themes/chiikawa/message06.png',
+            './themes/chiikawa/message07.png', './themes/chiikawa/message08.png', './themes/chiikawa/message09.png',
+            './themes/chiikawa/message10.png', './themes/chiikawa/message11.png', './themes/chiikawa/message12.png',
+            './themes/chiikawa/message13.png'
+        ])
     }
 };
 
-const DEFAULT_IMAGE_THEME = 'zhongshan';
+const RANDOM_IMAGE_THEME = 'random';
+const DEFAULT_IMAGE_THEME = RANDOM_IMAGE_THEME;
+const IMAGE_THEME_SELECTION_VERSION = 'random-v1';
+
+const getRandomImageTheme = () => {
+    const themeIds = Object.keys(REMINDER_IMAGE_THEMES);
+    return themeIds[Math.floor(Math.random() * themeIds.length)];
+};
 
 const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0');
@@ -79,7 +96,8 @@ const getDefaultReminderSettings = () => ({
     displayMode: 'image',
     selectionMode: 'auto',
     manualMessage: EXAM_MESSAGES[0],
-    imageTheme: DEFAULT_IMAGE_THEME
+    imageTheme: DEFAULT_IMAGE_THEME,
+    imageThemeSelectionVersion: IMAGE_THEME_SELECTION_VERSION
 });
 
 const getDefaultViewMode = () => 'student';
@@ -135,12 +153,24 @@ const App = () => {
         const saved = localStorage.getItem('reminder_settings');
         if (!saved) return getDefaultReminderSettings();
         try {
-            return { ...getDefaultReminderSettings(), ...JSON.parse(saved) };
+            const parsed = JSON.parse(saved);
+            // 將舊版儲存的預設主題升級為新的「隨機風格」預設值。
+            if (parsed.imageThemeSelectionVersion !== IMAGE_THEME_SELECTION_VERSION) {
+                return {
+                    ...getDefaultReminderSettings(),
+                    ...parsed,
+                    imageTheme: DEFAULT_IMAGE_THEME,
+                    imageThemeSelectionVersion: IMAGE_THEME_SELECTION_VERSION
+                };
+            }
+            return { ...getDefaultReminderSettings(), ...parsed };
         } catch {
             return getDefaultReminderSettings();
         }
     });
 
+    // 隨機風格在每次開啟看板時重新抽選，該次使用期間維持同一主題。
+    const [randomImageTheme, setRandomImageTheme] = useState(getRandomImageTheme);
     const [imageCycleTick, setImageCycleTick] = useState(0);
     const [viewMode, setViewMode] = useState(() => {
         const saved = localStorage.getItem('board_view_mode');
@@ -361,9 +391,11 @@ const App = () => {
         return autoReminderMessage;
     }, [reminderSettings, autoReminderMessage]);
 
-    const activeImageTheme = REMINDER_IMAGE_THEMES[reminderSettings.imageTheme]
-        ? reminderSettings.imageTheme
-        : DEFAULT_IMAGE_THEME;
+    const activeImageTheme = reminderSettings.imageTheme === RANDOM_IMAGE_THEME
+        ? randomImageTheme
+        : REMINDER_IMAGE_THEMES[reminderSettings.imageTheme]
+            ? reminderSettings.imageTheme
+            : randomImageTheme;
 
     const activeReminderImages = useMemo(() => {
         return REMINDER_IMAGE_THEMES[activeImageTheme].images[activeReminderMessage] || [];
@@ -604,8 +636,13 @@ const App = () => {
     };
 
     const setReminderImageTheme = (imageTheme) => {
-        if (!REMINDER_IMAGE_THEMES[imageTheme]) return;
-        setReminderSettings(prev => ({ ...prev, imageTheme }));
+        if (imageTheme !== RANDOM_IMAGE_THEME && !REMINDER_IMAGE_THEMES[imageTheme]) return;
+        if (imageTheme === RANDOM_IMAGE_THEME) setRandomImageTheme(getRandomImageTheme());
+        setReminderSettings(prev => ({
+            ...prev,
+            imageTheme,
+            imageThemeSelectionVersion: IMAGE_THEME_SELECTION_VERSION
+        }));
     };
 
     const toggleFullscreen = async () => {
@@ -878,11 +915,14 @@ const App = () => {
                                 </label>
                                 <select
                                     id="image-theme"
-                                    value={activeImageTheme}
+                                    value={reminderSettings.imageTheme === RANDOM_IMAGE_THEME
+                                        ? RANDOM_IMAGE_THEME
+                                        : activeImageTheme}
                                     onChange={(e) => setReminderImageTheme(e.target.value)}
                                     className="min-w-0 flex-1 cursor-pointer rounded-xl border border-amber-300 bg-white px-3 py-2 text-base font-bold text-gray-700 outline-none focus:border-blue-500"
                                     aria-label="選擇圖畫主題"
                                 >
+                                    <option value={RANDOM_IMAGE_THEME}>隨機風格</option>
                                     {Object.entries(REMINDER_IMAGE_THEMES).map(([themeId, theme]) => (
                                         <option key={themeId} value={themeId}>{theme.label}</option>
                                     ))}
