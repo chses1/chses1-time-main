@@ -60,16 +60,52 @@ const REMINDER_IMAGE_THEMES = {
     doraemon: {
         label: '多拉A夢人物風格',
         images: createThemeImageMap([
-            './themes/doraemon/message01.png', './themes/doraemon/message02.png', './themes/doraemon/message03.png',
-            './themes/doraemon/message04.png', './themes/doraemon/message05.png', './themes/doraemon/message06.png',
-            './themes/doraemon/message07.png', './themes/doraemon/message08.png', './themes/doraemon/message09.png',
-            './themes/doraemon/message10.png', './themes/doraemon/message11.png', './themes/doraemon/message12.png',
-            './themes/doraemon/message13.png'
+            './themes/doraemon/message01.jpg', './themes/doraemon/message02.jpg', './themes/doraemon/message03.jpg',
+            './themes/doraemon/message04.jpg', './themes/doraemon/message05.jpg', './themes/doraemon/message06.jpg',
+            './themes/doraemon/message07.jpg', './themes/doraemon/message08.jpg', './themes/doraemon/message09.jpg',
+            './themes/doraemon/message10.jpg', './themes/doraemon/message11.jpg', './themes/doraemon/message12.jpg',
+            './themes/doraemon/message13.jpg'
         ])
     }
 };
 
 const DEFAULT_IMAGE_THEME = 'zhongshan';
+
+// 多拉A夢圖卡使用系統文字與注音，避免圖檔內的文字錯字或因解析度而模糊。
+const REMINDER_ZHUYIN = {
+    [EXAM_MESSAGES[0]]: 'ㄎㄠˇ ㄐㄩㄢˋ ㄐㄧˋ ㄉㄜ˙ ㄒㄧㄝˇ ㄕㄤˋ ㄅㄢ ㄐㄧˊ ㄒㄧㄥˋ ㄇㄧㄥˊ ㄗㄨㄛˋ ㄏㄠˋ',
+    [EXAM_MESSAGES[1]]: 'ㄧㄡˇ ㄨㄣˋ ㄊㄧˊ ㄑㄧㄥˇ ㄐㄩˇ ㄕㄡˇ ㄐㄧㄢˇ ㄉㄨㄥ ㄒㄧ ㄑㄧㄥˇ ㄐㄧㄢ ㄎㄠˇ ㄌㄠˇ ㄕ ㄅㄤ ㄇㄤˊ',
+    [EXAM_MESSAGES[2]]: 'ㄅㄨˋ ㄏㄨㄟˋ ㄒㄧㄝˇ ㄉㄜ˙ ㄊㄧˊ ㄇㄨˋ ㄊㄧㄠˋ ㄍㄨㄛˋ ㄒㄧㄝˇ ㄏㄨㄟˋ ㄉㄜ˙ ㄊㄧˊ ㄇㄨˋ',
+    [EXAM_MESSAGES[3]]: 'ㄋㄞˋ ㄒㄧㄣ ㄓㄨㄢ ㄒㄧㄣ ㄒㄧˋ ㄒㄧㄣ',
+    [EXAM_MESSAGES[4]]: 'ㄎㄠˇ ㄐㄩㄢˋ ㄧㄡˇ ㄨㄣˋ ㄊㄧˊ ㄉㄥˇ ㄔㄨ ㄊㄧˊ ㄌㄠˇ ㄕ ㄌㄞˊ ㄕㄨㄛ ㄇㄧㄥˊ',
+    [EXAM_MESSAGES[5]]: 'ㄅㄨˋ ㄧㄠˋ ㄓㄨㄢˇ ㄊㄡˊ ㄏㄨㄛˋ ㄨㄢˊ ㄉㄨㄥ ㄒㄧ ㄒㄧㄝˇ ㄨㄢˊ ㄉㄨㄛ ㄐㄧㄢˇ ㄔㄚˊ',
+    [EXAM_MESSAGES[6]]: 'ㄐㄧㄢˇ ㄔㄚˊ ㄨㄢˊ ㄗㄞˋ ㄐㄧㄢˇ ㄔㄚˊ ㄏㄨㄛˋ ㄆㄚ ㄒㄧㄚˋ ㄒㄧㄡ ㄒㄧˊ',
+    [EXAM_MESSAGES[7]]: 'ㄎㄠˇ ㄕˋ ㄐㄧˊ ㄐㄧㄤ ㄐㄧㄝˊ ㄕㄨˋ ㄐㄧㄢˇ ㄔㄚˊ ㄧㄡˇ ㄇㄟˊ ㄧㄡˇ ㄒㄧㄝˇ ㄘㄨㄛˋ ㄉㄚˊ ㄢˋ',
+    [BREAK_MESSAGES[0]]: 'ㄉㄥˇ ㄐㄧㄢ ㄎㄠˇ ㄌㄠˇ ㄕ ㄏㄢˇ ㄒㄧㄚˋ ㄎㄜˋ ㄘㄞˊ ㄋㄥˊ ㄌㄧˊ ㄎㄞ ㄗㄨㄛˋ ㄨㄟˋ',
+    [BREAK_MESSAGES[1]]: 'ㄌㄧˋ ㄩㄥˋ ㄒㄧㄚˋ ㄎㄜˋ ㄕˊ ㄐㄧㄢ ㄓㄨㄣˇ ㄅㄟˋ ㄒㄧㄚˋ ㄍㄜ˙ ㄎㄜ ㄇㄨˋ ㄩˇ ㄨㄣˊ ㄐㄩˋ ㄩㄥˋ ㄆㄧㄣˇ',
+    [BREAK_MESSAGES[2]]: 'ㄊㄧˊ ㄗㄠˇ ㄕㄤˋ ㄘㄜˋ ㄙㄨㄛˇ ㄏㄜˊ ㄏㄜ ㄕㄨㄟˇ',
+    [BREAK_MESSAGES[3]]: 'ㄕㄡ ㄕˊ ㄓㄨㄛ ㄇㄧㄢˋ ㄅㄨˋ ㄧㄠˋ ㄈㄤˋ ㄕㄨㄟˇ ㄏㄨˊ',
+    [BREAK_MESSAGES[4]]: 'ㄓㄨㄣˇ ㄅㄟˋ ㄎㄠˇ ㄕˋ ㄉㄥˇ ㄉㄞˋ ㄐㄧㄢ ㄎㄠˇ ㄌㄠˇ ㄕ ㄈㄚ ㄐㄩㄢˋ'
+};
+
+const ReminderRubyText = ({ message }) => {
+    const syllables = (REMINDER_ZHUYIN[message] || '').split(' ').filter(Boolean);
+    let syllableIndex = 0;
+
+    return message.split('\n').map((line, lineIndex) => (
+        <span key={`${line}-${lineIndex}`} className="block whitespace-nowrap">
+            {Array.from(line).map((character, characterIndex) => {
+                if (!/[\u3400-\u9fff]/.test(character)) return character;
+                const zhuyin = syllables[syllableIndex++] || '';
+                return (
+                    <ruby key={`${character}-${characterIndex}`}>
+                        {character}<rt>{zhuyin}</rt>
+                    </ruby>
+                );
+            })}
+        </span>
+    ));
+};
 
 const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0');
@@ -947,8 +983,8 @@ const App = () => {
 
                                     {reminderImageSrc && activeImageTheme === 'doraemon' && (
                                         <div className="pointer-events-none absolute inset-0 flex items-center">
-                                            <div className="w-[52%] px-[5%] text-center text-[2.35vw] leading-[1.35] font-black text-gray-800 whitespace-pre-wrap break-words text-shadow">
-                                                {activeReminderMessage}
+                                            <div className="doraemon-ruby-text w-[49%] px-[4%] text-center text-[clamp(19px,1.7vw,30px)] font-black text-gray-800 text-shadow">
+                                                <ReminderRubyText message={activeReminderMessage} />
                                             </div>
                                         </div>
                                     )}

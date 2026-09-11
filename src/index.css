@@ -62,6 +62,22 @@ body {
   transform: translateY(-0.03em);
 }
 
+.doraemon-ruby-text {
+  line-height: 1.95;
+}
+
+.doraemon-ruby-text ruby {
+  ruby-position: over;
+}
+
+.doraemon-ruby-text rt {
+  color: #64748b;
+  font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+  font-size: 0.42em;
+  font-weight: 700;
+  user-select: none;
+}
+
 .subject-select {
   text-align: center;
   text-align-last: center;
