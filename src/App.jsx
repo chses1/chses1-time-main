@@ -50,11 +50,11 @@ const REMINDER_IMAGE_THEMES = {
     capybara: {
         label: '卡皮巴拉風格',
         images: createThemeImageMap([
-            './themes/capybara/message01.png', './themes/capybara/message02.png', './themes/capybara/message03.png',
-            './themes/capybara/message04.png', './themes/capybara/message05.png', './themes/capybara/message06.png',
-            './themes/capybara/message07.png', './themes/capybara/message08.png', './themes/capybara/message09.png',
-            './themes/capybara/message10.png', './themes/capybara/message11.png', './themes/capybara/message12.png',
-            './themes/capybara/message13.png'
+            './themes/capybara/message01.jpg', './themes/capybara/message02.jpg', './themes/capybara/message03.jpg',
+            './themes/capybara/message04.jpg', './themes/capybara/message05.jpg', './themes/capybara/message06.jpg',
+            './themes/capybara/message07.jpg', './themes/capybara/message08.jpg', './themes/capybara/message09.jpg',
+            './themes/capybara/message10.jpg', './themes/capybara/message11.jpg', './themes/capybara/message12.jpg',
+            './themes/capybara/message13.jpg'
         ])
     }
 };
