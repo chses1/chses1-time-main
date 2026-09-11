@@ -71,42 +71,6 @@ const REMINDER_IMAGE_THEMES = {
 
 const DEFAULT_IMAGE_THEME = 'zhongshan';
 
-// 多拉A夢圖卡使用系統文字與注音，避免圖檔內的文字錯字或因解析度而模糊。
-const REMINDER_ZHUYIN = {
-    [EXAM_MESSAGES[0]]: 'ㄎㄠˇ ㄐㄩㄢˋ ㄐㄧˋ ㄉㄜ˙ ㄒㄧㄝˇ ㄕㄤˋ ㄅㄢ ㄐㄧˊ ㄒㄧㄥˋ ㄇㄧㄥˊ ㄗㄨㄛˋ ㄏㄠˋ',
-    [EXAM_MESSAGES[1]]: 'ㄧㄡˇ ㄨㄣˋ ㄊㄧˊ ㄑㄧㄥˇ ㄐㄩˇ ㄕㄡˇ ㄐㄧㄢˇ ㄉㄨㄥ ㄒㄧ ㄑㄧㄥˇ ㄐㄧㄢ ㄎㄠˇ ㄌㄠˇ ㄕ ㄅㄤ ㄇㄤˊ',
-    [EXAM_MESSAGES[2]]: 'ㄅㄨˋ ㄏㄨㄟˋ ㄒㄧㄝˇ ㄉㄜ˙ ㄊㄧˊ ㄇㄨˋ ㄊㄧㄠˋ ㄍㄨㄛˋ ㄒㄧㄝˇ ㄏㄨㄟˋ ㄉㄜ˙ ㄊㄧˊ ㄇㄨˋ',
-    [EXAM_MESSAGES[3]]: 'ㄋㄞˋ ㄒㄧㄣ ㄓㄨㄢ ㄒㄧㄣ ㄒㄧˋ ㄒㄧㄣ',
-    [EXAM_MESSAGES[4]]: 'ㄎㄠˇ ㄐㄩㄢˋ ㄧㄡˇ ㄨㄣˋ ㄊㄧˊ ㄉㄥˇ ㄔㄨ ㄊㄧˊ ㄌㄠˇ ㄕ ㄌㄞˊ ㄕㄨㄛ ㄇㄧㄥˊ',
-    [EXAM_MESSAGES[5]]: 'ㄅㄨˋ ㄧㄠˋ ㄓㄨㄢˇ ㄊㄡˊ ㄏㄨㄛˋ ㄨㄢˊ ㄉㄨㄥ ㄒㄧ ㄒㄧㄝˇ ㄨㄢˊ ㄉㄨㄛ ㄐㄧㄢˇ ㄔㄚˊ',
-    [EXAM_MESSAGES[6]]: 'ㄐㄧㄢˇ ㄔㄚˊ ㄨㄢˊ ㄗㄞˋ ㄐㄧㄢˇ ㄔㄚˊ ㄏㄨㄛˋ ㄆㄚ ㄒㄧㄚˋ ㄒㄧㄡ ㄒㄧˊ',
-    [EXAM_MESSAGES[7]]: 'ㄎㄠˇ ㄕˋ ㄐㄧˊ ㄐㄧㄤ ㄐㄧㄝˊ ㄕㄨˋ ㄐㄧㄢˇ ㄔㄚˊ ㄧㄡˇ ㄇㄟˊ ㄧㄡˇ ㄒㄧㄝˇ ㄘㄨㄛˋ ㄉㄚˊ ㄢˋ',
-    [BREAK_MESSAGES[0]]: 'ㄉㄥˇ ㄐㄧㄢ ㄎㄠˇ ㄌㄠˇ ㄕ ㄏㄢˇ ㄒㄧㄚˋ ㄎㄜˋ ㄘㄞˊ ㄋㄥˊ ㄌㄧˊ ㄎㄞ ㄗㄨㄛˋ ㄨㄟˋ',
-    [BREAK_MESSAGES[1]]: 'ㄌㄧˋ ㄩㄥˋ ㄒㄧㄚˋ ㄎㄜˋ ㄕˊ ㄐㄧㄢ ㄓㄨㄣˇ ㄅㄟˋ ㄒㄧㄚˋ ㄍㄜ˙ ㄎㄜ ㄇㄨˋ ㄩˇ ㄨㄣˊ ㄐㄩˋ ㄩㄥˋ ㄆㄧㄣˇ',
-    [BREAK_MESSAGES[2]]: 'ㄊㄧˊ ㄗㄠˇ ㄕㄤˋ ㄘㄜˋ ㄙㄨㄛˇ ㄏㄜˊ ㄏㄜ ㄕㄨㄟˇ',
-    [BREAK_MESSAGES[3]]: 'ㄕㄡ ㄕˊ ㄓㄨㄛ ㄇㄧㄢˋ ㄅㄨˋ ㄧㄠˋ ㄈㄤˋ ㄕㄨㄟˇ ㄏㄨˊ',
-    [BREAK_MESSAGES[4]]: 'ㄓㄨㄣˇ ㄅㄟˋ ㄎㄠˇ ㄕˋ ㄉㄥˇ ㄉㄞˋ ㄐㄧㄢ ㄎㄠˇ ㄌㄠˇ ㄕ ㄈㄚ ㄐㄩㄢˋ'
-};
-
-const ReminderRubyText = ({ message }) => {
-    const syllables = (REMINDER_ZHUYIN[message] || '').split(' ').filter(Boolean);
-    let syllableIndex = 0;
-
-    return message.split('\n').map((line, lineIndex) => (
-        <span key={`${line}-${lineIndex}`} className="block whitespace-nowrap">
-            {Array.from(line).map((character, characterIndex) => {
-                if (!/[\u3400-\u9fff]/.test(character)) return character;
-                const zhuyin = syllables[syllableIndex++] || '';
-                return (
-                    <ruby key={`${character}-${characterIndex}`}>
-                        {character}<rt>{zhuyin}</rt>
-                    </ruby>
-                );
-            })}
-        </span>
-    ));
-};
-
 const formatTime = (date) => {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -420,6 +384,15 @@ const App = () => {
         const index = imageCycleTick % activeReminderImages.length;
         return activeReminderImages[index];
     }, [activeReminderImages, imageCycleTick]);
+
+    // 多拉A夢主題沿用校園圖卡的左側文字，僅以不同插圖取代右側畫面。
+    const originalTextCardSrc = useMemo(() => {
+        return REMINDER_IMAGE_THEMES.zhongshan.images[activeReminderMessage]?.[0] || null;
+    }, [activeReminderMessage]);
+
+    const displayedReminderImageSrc = activeImageTheme === 'doraemon'
+        ? originalTextCardSrc
+        : reminderImageSrc;
 
     const progressInfo = useMemo(() => {
         if (!currentSlot) {
@@ -965,10 +938,30 @@ const App = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div key={activeReminderMessage + (reminderImageSrc || 'no-image')} className="relative w-full h-full flex items-center justify-center animate-fade-in">
-                                    {reminderImageSrc ? (
+                                <div key={activeReminderMessage + (displayedReminderImageSrc || 'no-image')} className="relative w-full h-full flex items-center justify-center animate-fade-in">
+                                    {activeImageTheme === 'doraemon' && reminderImageSrc ? (
+                                        <>
+                                            <img
+                                                src={reminderImageSrc}
+                                                alt=""
+                                                className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-md select-none"
+                                                draggable="false"
+                                            />
+                                            <img
+                                                src={displayedReminderImageSrc}
+                                                alt={activeReminderMessage}
+                                                className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-md select-none doraemon-original-text-layer"
+                                                draggable="false"
+                                                onError={(e) => {
+                                                    e.currentTarget.onerror = null;
+                                                    const fallback = e.currentTarget.parentElement?.querySelector('.image-fallback-text');
+                                                    if (fallback) fallback.classList.remove('hidden');
+                                                }}
+                                            />
+                                        </>
+                                    ) : displayedReminderImageSrc ? (
                                         <img
-                                            src={reminderImageSrc}
+                                            src={displayedReminderImageSrc}
                                             alt={activeReminderMessage}
                                             className="max-w-full max-h-full object-contain rounded-2xl shadow-md select-none"
                                             draggable="false"
@@ -981,15 +974,7 @@ const App = () => {
                                         />
                                     ) : null}
 
-                                    {reminderImageSrc && activeImageTheme === 'doraemon' && (
-                                        <div className="pointer-events-none absolute inset-0 flex items-center">
-                                            <div className="doraemon-ruby-text w-[49%] px-[4%] text-center text-[clamp(19px,1.7vw,30px)] font-black text-gray-800 text-shadow">
-                                                <ReminderRubyText message={activeReminderMessage} />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <div className={`image-fallback-text ${reminderImageSrc ? 'hidden' : ''} w-full h-full rounded-[2rem] border-[8px] border-yellow-100 bg-white shadow-md px-8 py-6 flex items-center justify-center text-center`}>
+                                    <div className={`image-fallback-text ${displayedReminderImageSrc ? 'hidden' : ''} w-full h-full rounded-[2rem] border-[8px] border-yellow-100 bg-white shadow-md px-8 py-6 flex items-center justify-center text-center`}>
                                         <div className="text-[2.6vw] leading-[1.4] font-black text-gray-800 whitespace-pre-wrap break-words">
                                             {activeReminderMessage}
                                         </div>
