@@ -62,10 +62,6 @@ body {
   transform: translateY(-0.03em);
 }
 
-.doraemon-original-text-layer {
-  clip-path: inset(0 42% 0 0);
-}
-
 .subject-select {
   text-align: center;
   text-align-last: center;

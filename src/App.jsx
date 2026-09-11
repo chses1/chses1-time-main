@@ -385,15 +385,6 @@ const App = () => {
         return activeReminderImages[index];
     }, [activeReminderImages, imageCycleTick]);
 
-    // 多拉A夢主題沿用校園圖卡的左側文字，僅以不同插圖取代右側畫面。
-    const originalTextCardSrc = useMemo(() => {
-        return REMINDER_IMAGE_THEMES.zhongshan.images[activeReminderMessage]?.[0] || null;
-    }, [activeReminderMessage]);
-
-    const displayedReminderImageSrc = activeImageTheme === 'doraemon'
-        ? originalTextCardSrc
-        : reminderImageSrc;
-
     const progressInfo = useMemo(() => {
         if (!currentSlot) {
             return { remainingPercent: 0, color: 'stroke-gray-300', text: '等待中' };
@@ -938,30 +929,10 @@ const App = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div key={activeReminderMessage + (displayedReminderImageSrc || 'no-image')} className="relative w-full h-full flex items-center justify-center animate-fade-in">
-                                    {activeImageTheme === 'doraemon' && reminderImageSrc ? (
-                                        <>
-                                            <img
-                                                src={reminderImageSrc}
-                                                alt=""
-                                                className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-md select-none"
-                                                draggable="false"
-                                            />
-                                            <img
-                                                src={displayedReminderImageSrc}
-                                                alt={activeReminderMessage}
-                                                className="absolute inset-0 h-full w-full rounded-2xl object-cover shadow-md select-none doraemon-original-text-layer"
-                                                draggable="false"
-                                                onError={(e) => {
-                                                    e.currentTarget.onerror = null;
-                                                    const fallback = e.currentTarget.parentElement?.querySelector('.image-fallback-text');
-                                                    if (fallback) fallback.classList.remove('hidden');
-                                                }}
-                                            />
-                                        </>
-                                    ) : displayedReminderImageSrc ? (
+                                <div key={activeReminderMessage + (reminderImageSrc || 'no-image')} className="relative w-full h-full flex items-center justify-center animate-fade-in">
+                                    {reminderImageSrc ? (
                                         <img
-                                            src={displayedReminderImageSrc}
+                                            src={reminderImageSrc}
                                             alt={activeReminderMessage}
                                             className="max-w-full max-h-full object-contain rounded-2xl shadow-md select-none"
                                             draggable="false"
@@ -974,7 +945,7 @@ const App = () => {
                                         />
                                     ) : null}
 
-                                    <div className={`image-fallback-text ${displayedReminderImageSrc ? 'hidden' : ''} w-full h-full rounded-[2rem] border-[8px] border-yellow-100 bg-white shadow-md px-8 py-6 flex items-center justify-center text-center`}>
+                                    <div className={`image-fallback-text ${reminderImageSrc ? 'hidden' : ''} w-full h-full rounded-[2rem] border-[8px] border-yellow-100 bg-white shadow-md px-8 py-6 flex items-center justify-center text-center`}>
                                         <div className="text-[2.6vw] leading-[1.4] font-black text-gray-800 whitespace-pre-wrap break-words">
                                             {activeReminderMessage}
                                         </div>
