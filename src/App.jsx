@@ -71,11 +71,61 @@ const REMINDER_IMAGE_THEMES = {
 
 const RANDOM_IMAGE_THEME = 'random';
 const DEFAULT_IMAGE_THEME = RANDOM_IMAGE_THEME;
-const IMAGE_THEME_SELECTION_VERSION = 'random-v1';
+const IMAGE_THEME_SELECTION_VERSION = 'lesson-random-v2';
+const IMAGE_THEME_PLAN_STORAGE_KEY = 'daily_lesson_image_theme_plan';
 
-const getRandomImageTheme = () => {
+const getDateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const shuffle = (items) => {
+    const shuffled = [...items];
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+    }
+    return shuffled;
+};
+
+const isValidLessonThemePlan = (plan, dateKey) => {
     const themeIds = Object.keys(REMINDER_IMAGE_THEMES);
-    return themeIds[Math.floor(Math.random() * themeIds.length)];
+    return plan?.dateKey === dateKey
+        && Array.isArray(plan.themeOrder)
+        && plan.themeOrder.length === themeIds.length
+        && new Set(plan.themeOrder).size === themeIds.length
+        && plan.themeOrder.every(themeId => themeIds.includes(themeId));
+};
+
+// 每天將主題洗牌一次，三節課依序取用，確保同一天不會抽到重複主題。
+const getDailyLessonThemePlan = (date) => {
+    const dateKey = getDateKey(date);
+    try {
+        const savedPlan = JSON.parse(localStorage.getItem(IMAGE_THEME_PLAN_STORAGE_KEY));
+        if (isValidLessonThemePlan(savedPlan, dateKey)) return savedPlan;
+    } catch {
+        // 儲存資料不存在或格式錯誤時，直接建立新的當日順序。
+    }
+
+    const plan = { dateKey, themeOrder: shuffle(Object.keys(REMINDER_IMAGE_THEMES)) };
+    localStorage.setItem(IMAGE_THEME_PLAN_STORAGE_KEY, JSON.stringify(plan));
+    return plan;
+};
+
+const getLessonThemeIndex = (currentSlot) => {
+    if (!currentSlot) return 0;
+
+    const slotIndex = SCHEDULE.findIndex(slot => slot.start === currentSlot.start && slot.end === currentSlot.end);
+    for (let index = slotIndex; index >= 0; index -= 1) {
+        if (SCHEDULE[index].type === 'exam') {
+            return EXAM_SLOTS.findIndex(slot => slot.start === SCHEDULE[index].start);
+        }
+    }
+
+    // 第一節開始前的準備時段，預先顯示第一節所抽到的主題。
+    return 0;
 };
 
 const formatTime = (date) => {
@@ -154,12 +204,11 @@ const App = () => {
         if (!saved) return getDefaultReminderSettings();
         try {
             const parsed = JSON.parse(saved);
-            // 將舊版儲存的預設主題升級為新的「隨機風格」預設值。
+            // 保留教師已指定的主題；隨機風格改採「每節課不重複」的抽選規則。
             if (parsed.imageThemeSelectionVersion !== IMAGE_THEME_SELECTION_VERSION) {
                 return {
                     ...getDefaultReminderSettings(),
                     ...parsed,
-                    imageTheme: DEFAULT_IMAGE_THEME,
                     imageThemeSelectionVersion: IMAGE_THEME_SELECTION_VERSION
                 };
             }
@@ -169,8 +218,9 @@ const App = () => {
         }
     });
 
-    // 隨機風格在每次開啟看板時重新抽選，該次使用期間維持同一主題。
-    const [randomImageTheme, setRandomImageTheme] = useState(getRandomImageTheme);
+    const [lessonThemePlan, setLessonThemePlan] = useState(() => (
+        getDailyLessonThemePlan(new Date(now.getTime() + offset))
+    ));
     const [imageCycleTick, setImageCycleTick] = useState(0);
     const [viewMode, setViewMode] = useState(() => {
         const saved = localStorage.getItem('board_view_mode');
@@ -191,7 +241,7 @@ const App = () => {
 
     useEffect(() => {
         const imageTimer = setInterval(() => {
-            setImageCycleTick(prev => prev + 1);
+            setImageCycleTick(previousTick => previousTick + 1);
         }, 8000);
         return () => clearInterval(imageTimer);
     }, []);
@@ -362,6 +412,16 @@ const App = () => {
         return null;
     }, [adjustedNow]);
 
+    const lessonDateKey = getDateKey(adjustedNow);
+
+    useEffect(() => {
+        setLessonThemePlan(previousPlan => (
+            previousPlan.dateKey === lessonDateKey
+                ? previousPlan
+                : getDailyLessonThemePlan(adjustedNow)
+        ));
+    }, [lessonDateKey]);
+
     const autoReminderMessage = useMemo(() => {
         if (!currentSlot) return "目前沒有提醒事項";
 
@@ -391,20 +451,35 @@ const App = () => {
         return autoReminderMessage;
     }, [reminderSettings, autoReminderMessage]);
 
+    const activeLessonThemeIndex = getLessonThemeIndex(currentSlot);
+    const activeLessonCycleKey = currentSlot?.type === 'exam'
+        ? `${lessonDateKey}-${currentSlot.start}`
+        : lessonDateKey;
+
+    useEffect(() => {
+        // 新的一節課從該主題的第 1 張圖重新開始播放。
+        setImageCycleTick(0);
+    }, [activeLessonCycleKey]);
+
     const activeImageTheme = reminderSettings.imageTheme === RANDOM_IMAGE_THEME
-        ? randomImageTheme
+        ? lessonThemePlan.themeOrder[activeLessonThemeIndex] || lessonThemePlan.themeOrder[0]
         : REMINDER_IMAGE_THEMES[reminderSettings.imageTheme]
             ? reminderSettings.imageTheme
-            : randomImageTheme;
+            : lessonThemePlan.themeOrder[activeLessonThemeIndex] || lessonThemePlan.themeOrder[0];
 
     const activeReminderImages = useMemo(() => {
+        // 自動輪播的正式課程會完整播放該主題的 13 張圖片；手動指定則維持顯示該提醒的圖片。
+        if (reminderSettings.selectionMode === 'auto' && currentSlot?.type === 'exam') {
+            return ALL_REMINDER_MESSAGES.flatMap(message => (
+                REMINDER_IMAGE_THEMES[activeImageTheme].images[message] || []
+            ));
+        }
         return REMINDER_IMAGE_THEMES[activeImageTheme].images[activeReminderMessage] || [];
-    }, [activeImageTheme, activeReminderMessage]);
+    }, [activeImageTheme, activeReminderMessage, currentSlot, reminderSettings.selectionMode]);
 
     const reminderImageSrc = useMemo(() => {
         if (!activeReminderImages.length) return null;
-        const index = imageCycleTick % activeReminderImages.length;
-        return activeReminderImages[index];
+        return activeReminderImages[imageCycleTick % activeReminderImages.length];
     }, [activeReminderImages, imageCycleTick]);
 
     const progressInfo = useMemo(() => {
@@ -637,7 +712,7 @@ const App = () => {
 
     const setReminderImageTheme = (imageTheme) => {
         if (imageTheme !== RANDOM_IMAGE_THEME && !REMINDER_IMAGE_THEMES[imageTheme]) return;
-        if (imageTheme === RANDOM_IMAGE_THEME) setRandomImageTheme(getRandomImageTheme());
+        if (imageTheme === RANDOM_IMAGE_THEME) setLessonThemePlan(getDailyLessonThemePlan(adjustedNow));
         setReminderSettings(prev => ({
             ...prev,
             imageTheme,
