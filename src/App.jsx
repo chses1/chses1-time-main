@@ -58,7 +58,7 @@ const REMINDER_IMAGE_THEMES = {
         ])
     },
     chiikawa: {
-        label: '吉伊卡哇校園風格',
+        label: '吉伊卡哇風格',
         images: createThemeImageMap([
             './themes/chiikawa/message01.png', './themes/chiikawa/message02.png', './themes/chiikawa/message03.png',
             './themes/chiikawa/message04.png', './themes/chiikawa/message05.png', './themes/chiikawa/message06.png',
