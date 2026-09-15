@@ -76,6 +76,16 @@ const REMINDER_IMAGE_THEMES = {
             './themes/snoopy/message10.jpg', './themes/snoopy/message11.jpg', './themes/snoopy/message12.jpg',
             './themes/snoopy/message13.jpg'
         ])
+    },
+    pikmin: {
+        label: '皮克敏風格',
+        images: createThemeImageMap([
+            './themes/pikmin/message01.jpg', './themes/pikmin/message02.jpg', './themes/pikmin/message03.jpg',
+            './themes/pikmin/message04.jpg', './themes/pikmin/message05.jpg', './themes/pikmin/message06.jpg',
+            './themes/pikmin/message07.jpg', './themes/pikmin/message08.jpg', './themes/pikmin/message09.jpg',
+            './themes/pikmin/message10.jpg', './themes/pikmin/message11.jpg', './themes/pikmin/message12.jpg',
+            './themes/pikmin/message13.jpg'
+        ])
     }
 };
 
@@ -254,6 +264,16 @@ const App = () => {
             setImageCycleTick(previousTick => previousTick + 1);
         }, 8000);
         return () => clearInterval(imageTimer);
+    }, []);
+
+    useEffect(() => {
+        // 先在背景載入皮克敏圖卡，輪播切換時不必等待圖片下載。
+        Object.values(REMINDER_IMAGE_THEMES.pikmin.images)
+            .flat()
+            .forEach((src) => {
+                const image = new Image();
+                image.src = src;
+            });
     }, []);
 
     useEffect(() => {
