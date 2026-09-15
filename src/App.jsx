@@ -267,9 +267,9 @@ const App = () => {
     }, []);
 
     useEffect(() => {
-        // 先在背景載入皮克敏圖卡，輪播切換時不必等待圖片下載。
-        Object.values(REMINDER_IMAGE_THEMES.pikmin.images)
-            .flat()
+        // 先在背景載入所有主題圖卡，隨機輪播切換時不必等待圖片下載。
+        Object.values(REMINDER_IMAGE_THEMES)
+            .flatMap(theme => Object.values(theme.images).flat())
             .forEach((src) => {
                 const image = new Image();
                 image.src = src;
