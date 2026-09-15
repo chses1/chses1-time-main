@@ -66,6 +66,16 @@ const REMINDER_IMAGE_THEMES = {
             './themes/chiikawa/message10.png', './themes/chiikawa/message11.png', './themes/chiikawa/message12.png',
             './themes/chiikawa/message13.png'
         ])
+    },
+    snoopy: {
+        label: '史努比風格',
+        images: createThemeImageMap([
+            './themes/snoopy/message01.jpg', './themes/snoopy/message02.jpg', './themes/snoopy/message03.jpg',
+            './themes/snoopy/message04.jpg', './themes/snoopy/message05.jpg', './themes/snoopy/message06.jpg',
+            './themes/snoopy/message07.jpg', './themes/snoopy/message08.jpg', './themes/snoopy/message09.jpg',
+            './themes/snoopy/message10.jpg', './themes/snoopy/message11.jpg', './themes/snoopy/message12.jpg',
+            './themes/snoopy/message13.jpg'
+        ])
     }
 };
 
@@ -99,7 +109,7 @@ const isValidLessonThemePlan = (plan, dateKey) => {
         && plan.themeOrder.every(themeId => themeIds.includes(themeId));
 };
 
-// 每天將主題洗牌一次，三節課依序取用，確保同一天不會抽到重複主題。
+// 每天將主題洗牌一次，每節課依序取用，確保同一天不會抽到重複主題。
 const getDailyLessonThemePlan = (date) => {
     const dateKey = getDateKey(date);
     try {
