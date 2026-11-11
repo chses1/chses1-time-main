@@ -908,7 +908,7 @@ const App = () => {
                             const isActive = currentSlot && currentSlot.start === slot.start;
                             const isNone = (daySubjects[index] === "正常上課");
                             return (
-                                <div key={index} className={`flex-1 grid grid-cols-[32%_46%_22%] items-center border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
+                                <div key={index} style={{ gridTemplateColumns: '32% 46% 22%' }} className={`flex-1 grid items-center border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
                                     <div className="w-full flex items-center justify-center">
                                         {isTeacherMode ? <select
                                             disabled={!isTeacherMode}
