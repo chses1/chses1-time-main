@@ -12,9 +12,10 @@ export function runnerProgress(progress, lane) {
 }
 
 export const RACE_GEOMETRY = {
-    left: 25, right: 365, centerY: 25, straight: 340,
-    innerRadius: 118, laneGap: 82, laneWidth: 78,
-    spriteScale: .8, spriteCenterY: 0
+    // Long, symmetric straights make the top and bottom of each lane visually identical.
+    left: -10, right: 710, centerY: 25, straight: 720,
+    innerRadius: 94, laneGap: 64, laneWidth: 60,
+    spriteScale: .78, spriteCenterY: 0
 };
 
 export function trackPosition(progress, lane) {
@@ -98,10 +99,10 @@ export default function RaceTrack({ progress, active, text, color = 'stroke-gree
     const running = active && progress < 1;
     const messageLayout = layoutReminder(text);
     return <div className="school-race" aria-label={`${text}，時間已過 ${Math.round(progress * 100)}%`}>
-        <svg className="race-field" viewBox="-310 -325 1010 705" preserveAspectRatio="xMidYMid meet" role="img" aria-label="三道獨立跑道，小丸子、花輪、小玉各跑一道，大頭Q版人物與進度條同向移動">
-            <rect x="-45" y="-45" width="480" height="140" rx="70" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-            <rect x="-45" y="-45" width="480" height="140" rx="70" fill="none" className={`track-transition race-time-progress ${color}`} strokeWidth="8" pathLength="100" strokeDasharray="100" strokeDashoffset={progress * 100} strokeLinecap="round" />
-            <foreignObject x="9" y="-25" width="372" height="100" className="race-message-zone">
+        <svg className="race-field" viewBox="-270 -245 1250 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="三道獨立跑道，小丸子、花輪、小玉各跑一道，大頭Q版人物與進度條同向移動">
+            <rect x="18" y="-30" width="664" height="110" rx="55" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+            <rect x="18" y="-30" width="664" height="110" rx="55" fill="none" className={`track-transition race-time-progress ${color}`} strokeWidth="8" pathLength="100" strokeDasharray="100" strokeDashoffset={progress * 100} strokeLinecap="round" />
+            <foreignObject x="50" y="-18" width="600" height="86" className="race-message-zone">
                 <div xmlns="http://www.w3.org/1999/xhtml" className="race-message-box">
                     <span className="race-message-text" style={{ fontSize: `${messageLayout.fontSize}px` }}>{messageLayout.lines.join('\n')}</span>
                 </div>
@@ -109,14 +110,36 @@ export default function RaceTrack({ progress, active, text, color = 'stroke-gree
             {RUNNERS.map((runner, lane) => {
                 const radius = RACE_GEOMETRY.innerRadius + lane * RACE_GEOMETRY.laneGap;
                 return <g key={`lane-${runner.kind}`} data-race-lane={lane + 1}>
-                    <rect x={25 - radius} y={25 - radius} width={340 + 2 * radius} height={2 * radius} rx={radius} fill="none" stroke="#e5e7eb" strokeWidth={RACE_GEOMETRY.laneWidth} />
-                    <text x="75" y={25 - radius} textAnchor="middle" dominantBaseline="central" fill="#4b5563" fontSize="26" fontWeight="bold">{lane + 1}</text>
+                    <rect
+                        x={RACE_GEOMETRY.left - radius}
+                        y={RACE_GEOMETRY.centerY - radius}
+                        width={RACE_GEOMETRY.straight + 2 * radius}
+                        height={2 * radius}
+                        rx={radius}
+                        fill="none"
+                        stroke="#e5e7eb"
+                        strokeWidth={RACE_GEOMETRY.laneWidth}
+                    />
+                    <text x={RACE_GEOMETRY.left + 42} y={RACE_GEOMETRY.centerY - radius} textAnchor="middle" dominantBaseline="central" fill="#4b5563" fontSize="24" fontWeight="bold">{lane + 1}</text>
                 </g>;
             })}
-            <g className="race-start" aria-label="起跑線">
-                <line x1="25" x2="25" y1="-296" y2="-54" stroke="#ffffff" strokeWidth="6" />
-                <line x1="21" x2="21" y1="-296" y2="-54" stroke="#6b7280" strokeWidth="1.5" />
-                <text x="25" y="-310" textAnchor="middle" fill="#4b5563" fontSize="17" fontWeight="bold">起跑線</text>
+            <g className="race-start" aria-label="起跑位置">
+                <line
+                    x1={RACE_GEOMETRY.left}
+                    x2={RACE_GEOMETRY.left}
+                    y1={RACE_GEOMETRY.centerY - (RACE_GEOMETRY.innerRadius + 2 * RACE_GEOMETRY.laneGap) - RACE_GEOMETRY.laneWidth / 2}
+                    y2={RACE_GEOMETRY.centerY - RACE_GEOMETRY.innerRadius + RACE_GEOMETRY.laneWidth / 2}
+                    stroke="#ffffff"
+                    strokeWidth="5"
+                />
+                <line
+                    x1={RACE_GEOMETRY.left - 3}
+                    x2={RACE_GEOMETRY.left - 3}
+                    y1={RACE_GEOMETRY.centerY - (RACE_GEOMETRY.innerRadius + 2 * RACE_GEOMETRY.laneGap) - RACE_GEOMETRY.laneWidth / 2}
+                    y2={RACE_GEOMETRY.centerY - RACE_GEOMETRY.innerRadius + RACE_GEOMETRY.laneWidth / 2}
+                    stroke="#6b7280"
+                    strokeWidth="1.25"
+                />
             </g>
             {RUNNERS.map((runner, lane) => {
                 // No CSS translation tween: a straight interpolation cuts across
