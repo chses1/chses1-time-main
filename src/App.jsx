@@ -253,6 +253,36 @@ const App = () => {
 
     const isTeacherMode = viewMode === 'teacher';
 
+    // 恢復原 149f2e4 版本的雙日評量科目切換，沿用既有儲存鍵以保留教師設定。
+    const [examDay, setExamDay] = useState(() => localStorage.getItem('exam_day') === '2' ? 2 : 1);
+    const [dayTwoSubjects, setDayTwoSubjects] = useState(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem('exam_day_two_subjects'));
+            if (Array.isArray(saved) && saved.length === 3) {
+                return saved.map(subject => subject === '正常下課' ? '正常上課' : subject);
+            }
+        } catch {
+            // 第一次使用時套用第二天的預設科目。
+        }
+        return ['數學', '社會', '正常上課'];
+    });
+    const daySubjects = examDay === 2 ? dayTwoSubjects : examData.subjects;
+
+    useEffect(() => {
+        localStorage.setItem('exam_day', String(examDay));
+    }, [examDay]);
+
+    useEffect(() => {
+        localStorage.setItem('exam_day_two_subjects', JSON.stringify(dayTwoSubjects));
+    }, [dayTwoSubjects]);
+
+    const switchExamDay = (day) => {
+        if (day === examDay) return;
+        audioRefs.current.forEach(audio => audio?.pause());
+        setAudioTracks(tracks => tracks.map(track => ({ ...track, isPlaying: false })));
+        setExamDay(day);
+    };
+
     useEffect(() => {
         const timer = setInterval(() => {
             setNow(new Date());
@@ -601,9 +631,14 @@ const App = () => {
     };
 
     const handleSubjectChange = (index, value) => {
-        const newSubjects = [...examData.subjects];
+        if (!isTeacherMode) return;
+        const newSubjects = [...daySubjects];
         newSubjects[index] = value;
-        setExamData(prev => ({ ...prev, subjects: newSubjects }));
+        if (examDay === 2) {
+            setDayTwoSubjects(newSubjects);
+        } else {
+            setExamData(prev => ({ ...prev, subjects: newSubjects }));
+        }
     };
 
     const adjustTime = (seconds) => {
@@ -846,16 +881,33 @@ const App = () => {
 
             <div className="flex-1 flex flex-row h-[60vh]">
                 <div className="w-1/2 flex flex-col border-r-4 border-gray-300 bg-white overflow-hidden">
-                    <div className="h-2/3 flex flex-col border-b-2 border-dashed border-gray-300">
+                    <div className="h-2/3 flex flex-col border-b-2 border-dashed border-gray-300 relative" style={{ paddingLeft: isTeacherMode ? '54px' : '0' }}>
+                        {isTeacherMode && (
+                            <nav aria-label="評量日期" style={{ position: 'absolute', left: '5px', top: 0, bottom: 0, width: '44px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px' }}>
+                                {[1, 2].map(day => (
+                                    <button
+                                        key={day}
+                                        type="button"
+                                        onClick={() => switchExamDay(day)}
+                                        aria-pressed={examDay === day}
+                                        style={{ writingMode: 'vertical-rl', fontSize: '20px', fontWeight: 900, padding: '14px 9px', borderRadius: '12px', border: '1px solid #cbd5e1', background: examDay === day ? '#1d4ed8' : '#f1f5f9', color: examDay === day ? 'white' : '#334155' }}
+                                    >
+                                        {day === 1 ? '第一天' : '第二天'}
+                                    </button>
+                                ))}
+                            </nav>
+                        )}
                         {EXAM_SLOTS.map((slot, index) => {
                             const isActive = currentSlot && currentSlot.start === slot.start;
-                            const isNone = (examData.subjects[index] === "正常上課");
+                            const isNone = (daySubjects[index] === "正常上課");
                             return (
                                 <div key={index} className={`flex-1 flex items-center gap-2 border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
                                     <div className="flex-1">
                                         <select
-                                            value={examData.subjects[index] || ""}
+                                            disabled={!isTeacherMode}
+                                            value={daySubjects[index] || ""}
                                             onChange={(e) => handleSubjectChange(index, e.target.value)}
+                                            style={{ fontSize: daySubjects[index].length > 2 ? 'clamp(22px,2.4vw,44px)' : 'clamp(32px,3.6vw,64px)' }}
                                             className="subject-select w-full text-center text-[2.8vw] font-black bg-transparent border-b border-transparent hover:border-gray-200 focus:border-blue-500 outline-none placeholder-gray-300 leading-tight text-black"
                                         >
                                             {["國語","數學","社會","自然","英文","正常上課"].map((subj) => (
