@@ -908,8 +908,8 @@ const App = () => {
                             const isActive = currentSlot && currentSlot.start === slot.start;
                             const isNone = (daySubjects[index] === "正常上課");
                             return (
-                                <div key={index} className={`flex-1 flex items-center gap-2 border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
-                                    <div className="flex-1 flex items-center justify-center">
+                                <div key={index} className={`flex-1 grid grid-cols-[32%_46%_22%] items-center border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
+                                    <div className="w-full flex items-center justify-center">
                                         {isTeacherMode ? <select
                                             disabled={!isTeacherMode}
                                             value={daySubjects[index] || ""}
@@ -923,11 +923,11 @@ const App = () => {
                                         </select> : <span className="flex w-full min-h-full items-center justify-center text-center text-[2.8vw] font-black text-black" style={{ fontSize: daySubjects[index].length > 2 ? "clamp(22px,2.4vw,44px)" : "clamp(32px,3.6vw,64px)" }}>{daySubjects[index]}</span>}
                                     </div>
 
-                                    <div className="text-[3vw] font-black whitespace-nowrap text-black font-sans tracking-tight">
+                                    <div className="w-full text-center text-[3vw] font-black whitespace-nowrap text-black font-sans tracking-tight tabular-nums">
                                         {slot.start}~{slot.end}
                                     </div>
 
-                                    <div className="flex flex-col items-end justify-center gap-1 w-[22%] relative">
+                                    <div className="w-full flex flex-col items-end justify-center gap-1 relative">
                                         {isTeacherMode && daySubjects[index] === '英文' && <input
                                             type="file"
                                             accept="audio/*"
