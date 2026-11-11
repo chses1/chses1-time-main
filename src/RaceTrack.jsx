@@ -78,35 +78,19 @@ function Character({ runner, running }) {
 // Prefer the largest readable single-line label. Split only if a single line
 // would be too small to read; keep both lines entirely within the inner oval.
 export function layoutReminder(text) {
-    const chars = Array.from(String(text || ''));
-    const singleSize = Math.min(68, 360 / Math.max(1, chars.length));
-    if (singleSize >= 50) {
-        return { lines: [chars.join('')], fontSize: singleSize };
-    }
-    const preferredBreaks = {
-        '考試時間剩下一半': ['考試時間', '剩下一半'],
-        '考試時間不到10分鐘': ['考試時間', '不到10分鐘'],
-        '請收拾東西在座位上坐好': ['請收拾東西', '在座位上坐好'],
-        '快去上廁所喝水': ['快去上廁所', '喝水']
+    const value = String(text || '').replace(/\s+/g, '');
+    const length = Math.max(1, Array.from(value).length);
+    return {
+        text: value,
+        fontSize: Math.max(30, Math.min(74, 650 / length))
     };
-    const middle = Math.ceil(chars.length / 2);
-    const lines = preferredBreaks[text] || [chars.slice(0, middle).join(''), chars.slice(middle).join('')];
-    const longest = Math.max(1, ...lines.map(line => Array.from(line).length));
-    return { lines, fontSize: Math.min(46, 360 / longest, 96 / 2.2) };
 }
 
 export default function RaceTrack({ progress, active, text, color = 'stroke-green-500' }) {
     const running = active && progress < 1;
     const messageLayout = layoutReminder(text);
     return <div className="school-race" aria-label={`${text}，時間已過 ${Math.round(progress * 100)}%`}>
-        <svg className="race-field" viewBox="-270 -245 1250 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="三道獨立跑道，小丸子、花輪、小玉各跑一道，大頭Q版人物與進度條同向移動">
-            <rect x="18" y="-30" width="664" height="110" rx="55" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-            <rect x="18" y="-30" width="664" height="110" rx="55" fill="none" className={`track-transition race-time-progress ${color}`} strokeWidth="8" pathLength="100" strokeDasharray="100" strokeDashoffset={progress * 100} strokeLinecap="round" />
-            <foreignObject x="50" y="-18" width="600" height="86" className="race-message-zone">
-                <div xmlns="http://www.w3.org/1999/xhtml" className="race-message-box">
-                    <span className="race-message-text" style={{ fontSize: `${messageLayout.fontSize}px` }}>{messageLayout.lines.join('\n')}</span>
-                </div>
-            </foreignObject>
+        <svg className="race-field" viewBox="-270 -245 1250 540" preserveAspectRatio="xMidYMid meet" role="img" aria-label="三道獨立跑道，小丸子、花輪、小玉各跑一道，大頭Q版人物與進度條同向移動">
             {RUNNERS.map((runner, lane) => {
                 const radius = RACE_GEOMETRY.innerRadius + lane * RACE_GEOMETRY.laneGap;
                 return <g key={`lane-${runner.kind}`} data-race-lane={lane + 1}>
@@ -120,9 +104,30 @@ export default function RaceTrack({ progress, active, text, color = 'stroke-gree
                         stroke="#e5e7eb"
                         strokeWidth={RACE_GEOMETRY.laneWidth}
                     />
+                    {lane === 0 && (
+                        <rect
+                            x={RACE_GEOMETRY.left - radius}
+                            y={RACE_GEOMETRY.centerY - radius}
+                            width={RACE_GEOMETRY.straight + 2 * radius}
+                            height={2 * radius}
+                            rx={radius}
+                            fill="none"
+                            className={`track-transition race-time-progress ${color}`}
+                            strokeWidth="9"
+                            pathLength="100"
+                            strokeDasharray="100"
+                            strokeDashoffset={progress * 100}
+                            strokeLinecap="round"
+                        />
+                    )}
                     <text x={RACE_GEOMETRY.left + 42} y={RACE_GEOMETRY.centerY - radius} textAnchor="middle" dominantBaseline="central" fill="#4b5563" fontSize="24" fontWeight="bold">{lane + 1}</text>
                 </g>;
             })}
+            <foreignObject x="-35" y="-30" width="770" height="110" className="race-message-zone">
+                <div xmlns="http://www.w3.org/1999/xhtml" className="race-message-box">
+                    <span className="race-message-text" style={{ fontSize: `${messageLayout.fontSize}px` }}>{messageLayout.text}</span>
+                </div>
+            </foreignObject>
             <g className="race-start" aria-label="起跑位置">
                 <line
                     x1={RACE_GEOMETRY.left}
