@@ -876,7 +876,7 @@ const App = () => {
                     )}
                 </div>
 
-                <div className="w-1/2 flex flex-col relative bg-gray-100 items-center justify-center p-5 overflow-hidden">
+                <div className="w-1/2 min-w-0 h-full relative bg-gray-100 overflow-hidden">
                     <RaceTrack
                         color={progressInfo.color}
                         progress={currentSlot ? 1 - progressInfo.remainingPercent / 100 : (adjustedNow.getHours() * 60 + adjustedNow.getMinutes() >= 675 ? 1 : 0)}
