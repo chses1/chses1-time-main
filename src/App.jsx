@@ -907,7 +907,7 @@ const App = () => {
                             return (
                                 <div key={index} className={`flex-1 flex items-center gap-2 border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
                                     <div className="flex-1">
-                                        <select
+                                        {isTeacherMode ? <select
                                             disabled={!isTeacherMode}
                                             value={daySubjects[index] || ""}
                                             onChange={(e) => handleSubjectChange(index, e.target.value)}
@@ -917,7 +917,7 @@ const App = () => {
                                             {["國語","數學","社會","自然","英文","正常上課"].map((subj) => (
                                                 <option key={subj} value={subj}>{subj}</option>
                                             ))}
-                                        </select>
+                                        </select> : <span className="block w-full text-center text-[2.8vw] font-black text-black" style={{ fontSize: daySubjects[index].length > 2 ? "clamp(22px,2.4vw,44px)" : "clamp(32px,3.6vw,64px)" }}>{daySubjects[index]}</span>}
                                     </div>
 
                                     <div className="text-[3vw] font-black whitespace-nowrap text-black font-sans tracking-tight">
@@ -999,18 +999,18 @@ const App = () => {
                         <div className="flex-1 flex flex-col items-center justify-center border-r border-blue-200 p-2">
                             <span className="text-[1.5vw] font-bold text-blue-800">應到</span>
                             <div className="flex items-center justify-center gap-3 w-full">
-                                <button onClick={() => adjustCount('shouldArrive', -1)} className="btn-active w-12 h-12 rounded-full bg-blue-200 text-blue-900 font-black text-2xl hover:bg-blue-300" aria-label="應到減一">−</button>
-                                <input type="number" value={examData.shouldArrive} onChange={(e) => handleInputChange('shouldArrive', e.target.value)} className="w-full text-center bg-transparent text-[4vw] font-bold text-blue-900 outline-none" placeholder="0" />
-                                <button onClick={() => adjustCount('shouldArrive', 1)} className="btn-active w-12 h-12 rounded-full bg-blue-200 text-blue-900 font-black text-2xl hover:bg-blue-300" aria-label="應到加一">+</button>
+                                {isTeacherMode && <button onClick={() => adjustCount('shouldArrive', -1)} className="btn-active w-12 h-12 rounded-full bg-blue-200 text-blue-900 font-black text-2xl hover:bg-blue-300" aria-label="應到減一">−</button>}
+                                {isTeacherMode ? <input type="number" value={examData.shouldArrive} onChange={(e) => handleInputChange('shouldArrive', e.target.value)} className="w-full text-center bg-transparent text-[4vw] font-bold text-blue-900 outline-none" placeholder="0" /> : <span className="w-full text-center text-[4vw] font-bold text-blue-900">{examData.shouldArrive}</span>}
+                                {isTeacherMode && <button onClick={() => adjustCount('shouldArrive', 1)} className="btn-active w-12 h-12 rounded-full bg-blue-200 text-blue-900 font-black text-2xl hover:bg-blue-300" aria-label="應到加一">+</button>}
                             </div>
                         </div>
 
                         <div className="flex-1 flex flex-col items-center justify-center border-r border-blue-200 p-2">
                             <span className="text-[1.5vw] font-bold text-green-800">實到</span>
                             <div className="flex items-center justify-center gap-3 w-full">
-                                <button onClick={() => adjustCount('actualArrive', -1)} className="btn-active w-12 h-12 rounded-full bg-green-200 text-green-900 font-black text-2xl hover:bg-green-300" aria-label="實到減一">−</button>
-                                <input type="number" value={examData.actualArrive} onChange={(e) => handleInputChange('actualArrive', e.target.value)} className="w-full text-center bg-transparent text-[4vw] font-bold text-green-900 outline-none" placeholder="0" />
-                                <button onClick={() => adjustCount('actualArrive', 1)} className="btn-active w-12 h-12 rounded-full bg-green-200 text-green-900 font-black text-2xl hover:bg-green-300" aria-label="實到加一">+</button>
+                                {isTeacherMode && <button onClick={() => adjustCount('actualArrive', -1)} className="btn-active w-12 h-12 rounded-full bg-green-200 text-green-900 font-black text-2xl hover:bg-green-300" aria-label="實到減一">−</button>}
+                                {isTeacherMode ? <input type="number" value={examData.actualArrive} onChange={(e) => handleInputChange('actualArrive', e.target.value)} className="w-full text-center bg-transparent text-[4vw] font-bold text-green-900 outline-none" placeholder="0" /> : <span className="w-full text-center text-[4vw] font-bold text-green-900">{examData.actualArrive}</span>}
+                                {isTeacherMode && <button onClick={() => adjustCount('actualArrive', 1)} className="btn-active w-12 h-12 rounded-full bg-green-200 text-green-900 font-black text-2xl hover:bg-green-300" aria-label="實到加一">+</button>}
                             </div>
                         </div>
 
