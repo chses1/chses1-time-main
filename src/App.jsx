@@ -263,7 +263,7 @@ const App = () => {
     useEffect(() => {
         const imageTimer = setInterval(() => {
             setImageCycleTick(previousTick => previousTick + 1);
-        }, 8000);
+        }, 300000);
         return () => clearInterval(imageTimer);
     }, []);
 
@@ -499,14 +499,9 @@ const App = () => {
             : lessonThemePlan.themeOrder[activeLessonThemeIndex] || lessonThemePlan.themeOrder[0];
 
     const activeReminderImages = useMemo(() => {
-        // 自動輪播的正式課程會完整播放該主題的 13 張圖片；手動指定則維持顯示該提醒的圖片。
-        if (reminderSettings.selectionMode === 'auto' && currentSlot?.type === 'exam') {
-            return ALL_REMINDER_MESSAGES.flatMap(message => (
-                REMINDER_IMAGE_THEMES[activeImageTheme].images[message] || []
-            ));
-        }
+        // 依照目前顯示的提醒文字選擇圖片，避免考試期間誤播其他提醒圖卡。
         return REMINDER_IMAGE_THEMES[activeImageTheme].images[activeReminderMessage] || [];
-    }, [activeImageTheme, activeReminderMessage, currentSlot, reminderSettings.selectionMode]);
+    }, [activeImageTheme, activeReminderMessage]);
 
     const reminderImageSrc = useMemo(() => {
         if (!activeReminderImages.length) return null;
