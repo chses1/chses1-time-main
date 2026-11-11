@@ -196,12 +196,14 @@ const App = () => {
         const saved = localStorage.getItem('exam_data');
         if (saved) {
             const parsed = JSON.parse(saved);
-            if (typeof parsed.subject === 'string') {
-                return { ...parsed, subjects: [parsed.subject, "", ""], subject: undefined };
+            // 第一天科目以國語、自然、英文為基準；只對舊存檔更新一次。
+            if (localStorage.getItem('exam_day_one_subjects_v1') !== 'done') {
+                parsed.subjects = ['國語', '自然', '英文'];
+                localStorage.setItem('exam_day_one_subjects_v1', 'done');
+            } else if (!Array.isArray(parsed.subjects) || parsed.subjects.length !== 3) {
+                parsed.subjects = ['國語', '自然', '英文'];
             }
-            if (!parsed.subjects) {
-                return { ...parsed, subjects: ["", "", ""] };
-            }
+            if (typeof parsed.subject === 'string') delete parsed.subject;
             const _shouldNum = parseInt(parsed.shouldArrive, 10);
             if (!Number.isFinite(_shouldNum) || _shouldNum <= 0) parsed.shouldArrive = "26";
 
@@ -212,6 +214,7 @@ const App = () => {
 
             return parsed;
         }
+        localStorage.setItem('exam_day_one_subjects_v1', 'done');
         return {
             subjects: ["國語", "自然", "英文"],
             shouldArrive: "26",
@@ -906,7 +909,7 @@ const App = () => {
                             const isNone = (daySubjects[index] === "正常上課");
                             return (
                                 <div key={index} className={`flex-1 flex items-center gap-2 border-b border-gray-100 last:border-0 px-4 transition-colors duration-300 ${isActive ? 'bg-yellow-300' : ''} ${isNone ? 'opacity-40' : ''}`}>
-                                    <div className="flex-1">
+                                    <div className="flex-1 flex items-center justify-center">
                                         {isTeacherMode ? <select
                                             disabled={!isTeacherMode}
                                             value={daySubjects[index] || ""}
@@ -917,7 +920,7 @@ const App = () => {
                                             {["國語","數學","社會","自然","英文","正常上課"].map((subj) => (
                                                 <option key={subj} value={subj}>{subj}</option>
                                             ))}
-                                        </select> : <span className="block w-full text-center text-[2.8vw] font-black text-black" style={{ fontSize: daySubjects[index].length > 2 ? "clamp(22px,2.4vw,44px)" : "clamp(32px,3.6vw,64px)" }}>{daySubjects[index]}</span>}
+                                        </select> : <span className="flex w-full min-h-full items-center justify-center text-center text-[2.8vw] font-black text-black" style={{ fontSize: daySubjects[index].length > 2 ? "clamp(22px,2.4vw,44px)" : "clamp(32px,3.6vw,64px)" }}>{daySubjects[index]}</span>}
                                     </div>
 
                                     <div className="text-[3vw] font-black whitespace-nowrap text-black font-sans tracking-tight">
