@@ -117,7 +117,7 @@ input {
 .race-field { display: block; width: 100%; height: 100%; }
 .race-message-zone { pointer-events: none; overflow: hidden; }
 .race-message-box { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
-.race-message-text { display: block; max-width: 100%; white-space: pre-line; overflow-wrap: anywhere; line-height: 1.08; font-weight: 800; color: #64748b; opacity: .95; user-select: none; filter: drop-shadow(0 1px 1px #0000000d); }
+.race-message-text { display: block; max-width: 100%; white-space: nowrap; overflow-wrap: normal; line-height: 1; font-weight: 800; color: #64748b; opacity: .95; user-select: none; filter: drop-shadow(0 1px 1px #0000000d); }
 .race-runner { transition: none; }
 .race-character.is-running { animation: race-bounce .42s ease-in-out infinite alternate; animation-delay: var(--run-delay); }
 .is-running .race-leg { transform-box: fill-box; transform-origin: top center; animation: race-stride .36s ease-in-out infinite alternate; animation-delay: var(--run-delay); }
