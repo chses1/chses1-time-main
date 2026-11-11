@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import RaceTrack from './RaceTrack';
 
 const SCHEDULE = [
     { type: 'break', start: '08:40', end: '08:45', label: '準備' },
@@ -838,25 +839,13 @@ const App = () => {
                     )}
                 </div>
 
-                <div className="w-1/2 flex flex-col relative bg-gray-100 items-center justify-center p-5">
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                        <span className="text-[clamp(34px,4.2vw,82px)] font-bold text-gray-500 opacity-60 select-none whitespace-nowrap drop-shadow-sm">
-                            {progressInfo.text}
-                        </span>
-                    </div>
-                    <svg className="w-full h-full" viewBox="0 0 300 50" preserveAspectRatio="xMidYMid meet">
-                        <rect x="5" y="5" width="290" height="40" rx="20" ry="20" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-                        <rect
-                            x="5" y="5" width="290" height="40" rx="20" ry="20"
-                            fill="none"
-                            className={`track-transition ${progressInfo.color}`}
-                            strokeWidth="8"
-                            pathLength="100"
-                            strokeDasharray="100"
-                            strokeDashoffset={100 - progressInfo.remainingPercent}
-                            strokeLinecap="round"
-                        />
-                    </svg>
+                <div className="w-1/2 flex flex-col relative bg-gray-100 items-center justify-center p-5 overflow-hidden">
+                    <RaceTrack
+                        color={progressInfo.color}
+                        progress={currentSlot ? 1 - progressInfo.remainingPercent / 100 : (adjustedNow.getHours() * 60 + adjustedNow.getMinutes() >= 675 ? 1 : 0)}
+                        active={currentSlot?.type === 'exam'}
+                        text={currentSlot ? progressInfo.text : (adjustedNow.getHours() * 60 + adjustedNow.getMinutes() >= 675 ? '今日評量結束' : '等待中')}
+                    />
                 </div>
             </div>
 
@@ -1112,3 +1101,4 @@ const App = () => {
 };
 
 export default App;
+
