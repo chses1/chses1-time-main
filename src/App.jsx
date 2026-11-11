@@ -632,6 +632,10 @@ const App = () => {
 
     const handleSubjectChange = (index, value) => {
         if (!isTeacherMode) return;
+        if (value !== '英文') {
+            audioRefs.current[index]?.pause();
+            setAudioTracks(tracks => tracks.map((track, trackIndex) => trackIndex === index ? { ...track, isPlaying: false } : track));
+        }
         const newSubjects = [...daySubjects];
         newSubjects[index] = value;
         if (examDay === 2) {
@@ -921,15 +925,15 @@ const App = () => {
                                     </div>
 
                                     <div className="flex flex-col items-end justify-center gap-1 w-[22%] relative">
-                                        <input
+                                        {isTeacherMode && daySubjects[index] === '英文' && <input
                                             type="file"
                                             accept="audio/*"
                                             ref={el => fileInputRefs.current[index] = el}
                                             onChange={(e) => handleFileSelect(index, e)}
                                             className="hidden-input"
-                                        />
+                                        />}
 
-                                        <div className="flex gap-1 w-full justify-end items-center">
+                                        {isTeacherMode && daySubjects[index] === '英文' && <div className="flex gap-1 w-full justify-end items-center">
                                             <button
                                                 onClick={() => fileInputRefs.current[index]?.click()}
                                                 className="btn-active p-1 bg-gray-100 text-gray-500 rounded hover:bg-gray-200 transition-colors h-8 w-8 flex items-center justify-center"
@@ -956,9 +960,9 @@ const App = () => {
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                                                 </button>
                                             )}
-                                        </div>
+                                        </div>}
 
-                                        {audioTracks[index].src && (
+                                        {daySubjects[index] === '英文' && audioTracks[index].src && (
                                             <div className="w-full mt-1 flex flex-col gap-0.5">
                                                 <input
                                                     type="range"
